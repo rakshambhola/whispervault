@@ -10,7 +10,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Search, Users, Menu } from 'lucide-react';
+import { MessageCircle, Search, Users, Menu, ArrowUpRight } from 'lucide-react';
 
 import GuidelinesModal from '@/components/GuidelinesModal';
 
@@ -71,12 +71,38 @@ export default function Home() {
     <div className="min-h-screen bg-background flex flex-col">
       <GuidelinesModal />
       {/* Navbar */}
-      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-background/30 border-b border-white/5 supports-[backdrop-filter]:bg-background/30">
+      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-background/40 border-b border-white/10 supports-[backdrop-filter]:bg-background/40 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 font-bold text-xl text-primary">
+          <div className="relative flex items-center gap-2 font-bold text-xl text-primary">
             <MessageCircle className="h-6 w-6" />
             <span>AnonyChat</span>
+
+            {/* Hanging Tag for Desktop - Star Repo (below logo) */}
+            <div className="hidden sm:block absolute left-0 top-full flex flex-col items-start">
+              {/* Connection Line */}
+              <div className="w-px h-1 bg-gradient-to-b from-white/20 to-transparent"></div>
+              {/* Tag */}
+              <a
+                href="https://github.com/vivekisadev/anony-chat"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-1 rounded-md bg-background/60 backdrop-blur-md border border-white/10 shadow-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-300 group animate-[swing_3s_ease-in-out_infinite]"
+                style={{
+                  transformOrigin: 'top center',
+                }}
+              >
+                <svg
+                  className="w-3 h-3 opacity-70 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110 group-hover:[filter:drop-shadow(0_0_8px_rgba(255,215,0,0.6))]"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                <span className="text-foreground font-semibold group-hover:[text-shadow:0_0_15px_rgba(0,0,0,0.4)] dark:group-hover:[text-shadow:0_0_15px_rgba(255,255,255,0.6)] transition-all duration-300">Star on GitHub</span>
+                <ArrowUpRight className="w-2.5 h-2.5 opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </a>
+            </div>
           </div>
 
           {/* Desktop Navigation */}
@@ -97,8 +123,49 @@ export default function Home() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 shadow-sm text-sm font-medium text-muted-foreground">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-foreground font-semibold">{onlineUsers}</span>
+              <span className="hidden md:inline text-xs opacity-70">Active Users</span>
+              <span className="md:hidden text-xs opacity-70">Active</span>
+            </div>
+
+            <a
+              href="https://github.com/vivekisadev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 shadow-sm text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-300 group"
+            >
+              <span className="text-xs opacity-70">Created by</span>
+              <span className="text-foreground font-semibold group-hover:[text-shadow:0_0_15px_rgba(0,0,0,0.4)] dark:group-hover:[text-shadow:0_0_15px_rgba(255,255,255,0.6)] transition-all duration-300">Vivek</span>
+              <ArrowUpRight className="w-3 h-3 opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
+
             <ThemeToggle />
           </div>
+        </div>
+
+        {/* Hanging Tag for Mobile - Creator */}
+        <div className="sm:hidden absolute right-6 top-16 flex flex-col items-end">
+          {/* Connection Line */}
+          <div className="w-px h-1 bg-gradient-to-b from-white/20 to-transparent"></div>
+          {/* Tag */}
+          <a
+            href="https://github.com/vivekisadev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background/60 backdrop-blur-md border border-white/10 shadow-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-300 group animate-[swing_3s_ease-in-out_infinite]"
+            style={{
+              transformOrigin: 'top center',
+            }}
+          >
+            <span className="opacity-70">by</span>
+            <span className="text-foreground font-semibold group-hover:[text-shadow:0_0_15px_rgba(0,0,0,0.4)] dark:group-hover:[text-shadow:0_0_15px_rgba(255,255,255,0.6)] transition-all duration-300">Vivek</span>
+            <ArrowUpRight className="w-3 h-3 opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </a>
         </div>
       </header>
 
@@ -235,9 +302,23 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border/40 py-8 mt-auto bg-background/50">
         <div className="max-w-5xl mx-auto px-6 text-center text-sm text-muted-foreground">
-          <p>© 2024 AnonyChat. A safe space for anonymous sharing.</p>
+          <p>
+            © {new Date().getFullYear()} AnonyChat. Created by{' '}
+            <a
+              href="https://github.com/vivekisadev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative inline-flex items-center gap-1 text-foreground font-medium group transition-all duration-300"
+            >
+              <span className="relative transition-all duration-300 group-hover:[text-shadow:0_0_20px_rgba(0,0,0,0.6),0_0_30px_rgba(0,0,0,0.3)] dark:group-hover:[text-shadow:0_0_20px_rgba(255,255,255,0.8),0_0_30px_rgba(255,255,255,0.4)] group-hover:text-foreground">
+                Vivek
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </span>
+              <ArrowUpRight className="w-4 h-4 text-foreground/70 transition-all duration-300 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:[filter:drop-shadow(0_0_8px_rgba(0,0,0,0.4))] dark:group-hover:[filter:drop-shadow(0_0_8px_rgba(255,255,255,0.6))]" />
+            </a>
+          </p>
         </div>
-      </footer>
-    </div>
+      </footer >
+    </div >
   );
 }

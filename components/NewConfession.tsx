@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, X } from 'lucide-react';
+import { Send, X, Smile } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 
 interface NewConfessionProps {
     onConfessionCreated: () => void;
@@ -18,6 +21,7 @@ export default function NewConfession({ onConfessionCreated }: NewConfessionProp
     const [tagInput, setTagInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const handleAddTag = () => {
         if (tagInput.trim() && tags.length < 5 && !tags.includes(tagInput.trim())) {
@@ -66,13 +70,40 @@ export default function NewConfession({ onConfessionCreated }: NewConfessionProp
                 <h3 className="text-lg font-bold mb-4 text-foreground tracking-tight">Share Your Confession</h3>
 
                 <div className="space-y-4">
-                    <Textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        placeholder="What's on your mind? Share anonymously..."
-                        className="min-h-[120px] resize-none bg-secondary/30 border-border focus:border-primary rounded-lg text-[15px] placeholder:text-muted-foreground"
-                        maxLength={500}
-                    />
+                    <div className="relative">
+                        {/* Emoji Picker */}
+                        {showEmojiPicker && (
+                            <div className="absolute bottom-full mb-2 left-0 z-50">
+                                <EmojiPicker
+                                    onEmojiClick={(emojiData) => {
+                                        setContent(prev => prev + emojiData.emoji);
+                                        setShowEmojiPicker(false);
+                                    }}
+                                    width={300}
+                                    height={400}
+                                />
+                            </div>
+                        )}
+
+                        <Textarea
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder="What's on your mind? Share anonymously..."
+                            className="min-h-[120px] resize-none bg-secondary/30 border-border focus:border-primary rounded-lg text-[15px] placeholder:text-muted-foreground"
+                            maxLength={500}
+                        />
+
+                        {/* Emoji Button */}
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className="absolute bottom-2 right-2 h-8 w-8 hover:bg-secondary"
+                        >
+                            <Smile className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </div>
 
                     <div className="flex justify-between items-center">
                         <div className="flex-1 mr-4">

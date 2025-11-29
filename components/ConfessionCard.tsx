@@ -21,57 +21,96 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
     const [showReportModal, setShowReportModal] = useState(false);
     const userId = getUserId();
 
-    const voteScore = calculateVoteScore(confession.upvotes, confession.downvotes);
-    const hasUpvoted = hasUserVoted(confession.id, userId, 'upvote');
-    const hasDownvoted = hasUserVoted(confession.id, userId, 'downvote');
+    // Optimistic UI state
+    const [localUpvotes, setLocalUpvotes] = useState(confession.upvotes);
+    const [localDownvotes, setLocalDownvotes] = useState(confession.downvotes);
+    const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(() => {
+        if (hasUserVoted(confession.id, userId, 'upvote')) return 'upvote';
+        if (hasUserVoted(confession.id, userId, 'downvote')) return 'downvote';
+        return null;
+    });
+
+    const voteScore = calculateVoteScore(localUpvotes, localDownvotes);
 
     const handleVote = async (voteType: 'upvote' | 'downvote') => {
-        const currentVote = hasUserVoted(confession.id, userId, voteType);
+        const previousUpvotes = localUpvotes;
+        const previousDownvotes = localDownvotes;
+        const previousUserVote = userVote;
+
+        // Optimistic update
+        if (userVote === voteType) {
+            // Remove vote
+            setUserVote(null);
+            if (voteType === 'upvote') setLocalUpvotes(prev => prev - 1);
+            else setLocalDownvotes(prev => prev - 1);
+            removeUserVote(confession.id, userId);
+        } else {
+            // Change or add vote
+            if (userVote) {
+                // Switching vote (e.g. up to down)
+                if (voteType === 'upvote') {
+                    setLocalUpvotes(prev => prev + 1);
+                    setLocalDownvotes(prev => prev - 1);
+                } else {
+                    setLocalUpvotes(prev => prev - 1);
+                    setLocalDownvotes(prev => prev + 1);
+                }
+            } else {
+                // New vote
+                if (voteType === 'upvote') setLocalUpvotes(prev => prev + 1);
+                else setLocalDownvotes(prev => prev + 1);
+            }
+            setUserVote(voteType);
+            saveUserVote(confession.id, userId, voteType);
+        }
 
         try {
-            if (currentVote) {
+            // Server sync
+            const action = userVote === voteType ? 'remove' : undefined;
+
+            // If switching votes, we might need two requests or a smarter API. 
+            // The current API seems to handle "add" but not explicit "switch".
+            // However, the previous logic did a remove then add.
+            // Let's replicate the logic but in background.
+
+            if (previousUserVote && previousUserVote !== voteType && action !== 'remove') {
+                // Remove old vote first
                 await fetch('/api/vote', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         targetId: confession.id,
                         targetType: 'confession',
-                        voteType,
+                        voteType: previousUserVote,
                         action: 'remove',
                     }),
                 });
-                removeUserVote(confession.id, userId);
-            } else {
-                const oppositeVote = voteType === 'upvote' ? 'downvote' : 'upvote';
-                if (hasUserVoted(confession.id, userId, oppositeVote)) {
-                    await fetch('/api/vote', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            targetId: confession.id,
-                            targetType: 'confession',
-                            voteType: oppositeVote,
-                            action: 'remove',
-                        }),
-                    });
-                    removeUserVote(confession.id, userId);
-                }
-
-                await fetch('/api/vote', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        targetId: confession.id,
-                        targetType: 'confession',
-                        voteType,
-                    }),
-                });
-                saveUserVote(confession.id, userId, voteType);
             }
 
-            onUpdate();
+            await fetch('/api/vote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    targetId: confession.id,
+                    targetType: 'confession',
+                    voteType,
+                    action,
+                }),
+            });
+
+            // We don't strictly need onUpdate() anymore for the vote count, 
+            // but we might want it for other things. 
+            // Calling it might overwrite our optimistic state if the server is slow/stale,
+            // so we can skip it or debounce it. For now, let's skip it to keep UI stable.
+            // onUpdate(); 
         } catch (error) {
             console.error('Vote failed:', error);
+            // Revert on error
+            setLocalUpvotes(previousUpvotes);
+            setLocalDownvotes(previousDownvotes);
+            setUserVote(previousUserVote);
+            if (previousUserVote) saveUserVote(confession.id, userId, previousUserVote);
+            else removeUserVote(confession.id, userId);
         }
     };
 
@@ -152,7 +191,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleVote('upvote')}
-                                    className={`h-8 w-8 rounded-md hover:bg-background ${hasUpvoted ? 'text-green-500' : 'text-muted-foreground'
+                                    className={`h-8 w-8 rounded-md hover:bg-background ${userVote === 'upvote' ? 'text-green-500' : 'text-muted-foreground'
                                         }`}
                                 >
                                     <ArrowUp className="h-5 w-5" />
@@ -165,7 +204,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleVote('downvote')}
-                                    className={`h-8 w-8 rounded-md hover:bg-background ${hasDownvoted ? 'text-red-500' : 'text-muted-foreground'
+                                    className={`h-8 w-8 rounded-md hover:bg-background ${userVote === 'downvote' ? 'text-red-500' : 'text-muted-foreground'
                                         }`}
                                 >
                                     <ArrowDown className="h-5 w-5" />

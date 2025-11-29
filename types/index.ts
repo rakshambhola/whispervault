@@ -26,7 +26,8 @@ export interface ChatMessage {
     timestamp: number;
     userId: string;
     roomId: string;
-    isReported?: boolean;   
+    image?: string;
+    isReported?: boolean;
 }
 
 export interface ChatRoom {

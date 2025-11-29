@@ -12,7 +12,7 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 // In-memory storage
-const chatRooms = new Map<string, ChatRoom>();  
+const chatRooms = new Map<string, ChatRoom>();
 const userRooms = new Map<string, string>();
 
 const generateId = (): string => {
@@ -21,7 +21,7 @@ const generateId = (): string => {
 
 app.prepare().then(() => {
     const server = createServer(async (req, res) => {
-        try {   
+        try {
             const parsedUrl = parse(req.url!, true);
             await handle(req, res, parsedUrl);
         } catch (err) {
@@ -86,7 +86,7 @@ app.prepare().then(() => {
             broadcastOnlineCount();
         });
 
-        socket.on('send-message', (data: { userId: string; content: string }) => {
+        socket.on('send-message', (data: { userId: string; content: string; image?: string }) => {
             const roomId = userRooms.get(data.userId);
             if (!roomId) return;
 
@@ -96,6 +96,7 @@ app.prepare().then(() => {
             const message: ChatMessage = {
                 id: generateId(),
                 content: data.content,
+                image: data.image,
                 timestamp: Date.now(),
                 userId: data.userId,
                 roomId,
@@ -122,6 +123,7 @@ app.prepare().then(() => {
                 if (room.users.length === 0) {
                     chatRooms.delete(roomId);
                 } else {
+                    socket.to(roomId).emit('partner-disconnected');
                     socket.to(roomId).emit('user-left', { userCount: room.users.length });
                 }
             }
@@ -146,6 +148,7 @@ app.prepare().then(() => {
                     if (room.users.length === 0) {
                         chatRooms.delete(roomId);
                     } else {
+                        socket.to(roomId).emit('partner-disconnected');
                         socket.to(roomId).emit('user-left', { userCount: room.users.length });
                     }
 
