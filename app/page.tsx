@@ -12,8 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle, Search, Users, Menu, ArrowUpRight, Lock, Github, Star } from 'lucide-react';
+import GuidelinesModal from '@/components/GuidelinesModal';
 
-// ... (keep existing imports)
+
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'confessions' | 'chat'>('confessions');
@@ -55,6 +56,15 @@ export default function Home() {
   // ... (keep existing code)
 
 
+
+  const filteredConfessions = confessions.filter(confession => {
+    const matchesSearch = confession.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (confession.tags && confession.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
+    const matchesTag = selectedTag ? confession.tags && confession.tags.includes(selectedTag) : true;
+    return matchesSearch && matchesTag;
+  });
+
+  const uniqueTags = Array.from(new Set(confessions.flatMap(c => c.tags || [])));
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
