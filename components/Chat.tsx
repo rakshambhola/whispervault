@@ -32,8 +32,17 @@ export default function Chat() {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     useEffect(() => {
-        const newSocket = io({
+        // Connect to external Socket.IO server (deployed separately)
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+
+        if (!socketUrl) {
+            console.warn('NEXT_PUBLIC_SOCKET_URL not configured. Chat will not work.');
+            return;
+        }
+
+        const newSocket = io(socketUrl, {
             path: '/api/socket',
+            addTrailingSlash: false,
         });
 
         newSocket.on('connect', () => {
@@ -249,7 +258,15 @@ export default function Chat() {
                 {messages.length === 0 && (
                     <div className="h-full flex items-center justify-center">
                         <div className="text-center text-muted-foreground">
-                            {userCount === 2 ? (
+                            {!process.env.NEXT_PUBLIC_SOCKET_URL ? (
+                                <>
+                                    <p className="text-lg mb-2">💬 Live Chat</p>
+                                    <p className="text-sm max-w-md mx-auto">
+                                        To enable real-time chat, deploy the Socket.IO server separately.
+                                        See <code className="text-primary">SOCKET-DEPLOYMENT.md</code> for instructions.
+                                    </p>
+                                </>
+                            ) : userCount === 2 ? (
                                 <>
                                     <p className="text-lg mb-2">Say hi! 👋</p>
                                     <p className="text-sm">Start a conversation with your anonymous stranger</p>

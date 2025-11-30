@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "AnonyChat - Anonymous Campus Confession & Chat",
+  title: "Whisper Vault - Anonymous Campus Confession & Chat",
   description: "Share anonymous confessions and chat with strangers on your campus. A safe space for students to express themselves freely.",
 };
 

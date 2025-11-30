@@ -30,7 +30,7 @@ export default function GuidelinesModal() {
                         <h2 className="text-xl font-bold text-foreground">Community Guidelines</h2>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        Welcome to AnonyChat! Please read and accept our rules to continue.
+                        Welcome to Whisper Vault! Please read and accept our rules to continue.
                     </p>
                 </div>
 

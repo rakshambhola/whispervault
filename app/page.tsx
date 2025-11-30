@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { io } from 'socket.io-client';
 import { Confession } from '@/types';
 import ConfessionCard from '@/components/ConfessionCard';
@@ -10,7 +11,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Search, Users, Menu, ArrowUpRight } from 'lucide-react';
+import { MessageCircle, Search, Users, Menu, ArrowUpRight, Lock } from 'lucide-react';
 
 import GuidelinesModal from '@/components/GuidelinesModal';
 
@@ -45,16 +46,22 @@ export default function Home() {
   useEffect(() => {
     fetchConfessions();
 
-    // Connect to socket for real-time online count
-    const socket = io({ path: '/api/socket' });
+    // Connect to Socket.IO server (separate server in production)
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
+    if (socketUrl) {
+      const socket = io(socketUrl, {
+        path: '/api/socket',
+        addTrailingSlash: false,
+      });
 
-    socket.on('online-users', (count: number) => {
-      setOnlineUsers(count);
-    });
+      socket.on('online-users', (count: number) => {
+        setOnlineUsers(count);
+      });
 
-    return () => {
-      socket.disconnect();
-    };
+      return () => {
+        socket.disconnect();
+      };
+    }
   }, []);
 
   // Unique tags for filter dropdown
@@ -74,14 +81,40 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-background/40 border-b border-white/10 supports-[backdrop-filter]:bg-background/40 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="relative flex items-center gap-2 font-bold text-xl text-primary">
-            <MessageCircle className="h-6 w-6" />
-            <span>AnonyChat</span>
+          {/* Logo Wrapper */}
+          <div className="relative">
+            {/* Logo Group */}
+            <div className="flex items-center gap-1 group cursor-pointer select-none">
+              {/* Icon Container - Transparent */}
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-transparent transition-all duration-300 group-hover:scale-105">
+                {/* Logo using Mask for Color Control */}
+                <div
+                  className="w-8 h-8 bg-foreground group-hover:bg-primary transition-colors duration-300"
+                  style={{
+                    maskImage: "url('/logo.png')",
+                    maskSize: "contain",
+                    maskRepeat: "no-repeat",
+                    maskPosition: "center",
+                    WebkitMaskImage: "url('/logo.png')",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                  }}
+                />
+              </div>
+
+              {/* Text */}
+              <div className="flex flex-col leading-none">
+                <span className="text-lg font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300">
+                  Whisper Vault
+                </span>
+              </div>
+            </div>
 
             {/* Hanging Tag for Desktop - Star Repo (below logo) */}
-            <div className="hidden sm:block absolute left-0 top-full flex flex-col items-start">
-              {/* Connection Line */}
-              <div className="w-px h-1 bg-gradient-to-b from-white/20 to-transparent"></div>
+            <div className="hidden sm:block absolute left-1 top-full flex flex-col items-start z-10">
+              {/* Connection Line - Increased height for spacing */}
+              <div className="w-px h-4 bg-gradient-to-b from-border/50 to-transparent ml-4"></div>
               {/* Tag */}
               <a
                 href="https://github.com/vivekisadev/anony-chat"
@@ -167,12 +200,12 @@ export default function Home() {
             <ArrowUpRight className="w-3 h-3 opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
         </div>
-      </header>
+      </header >
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-10">
+      < main className="flex-1 w-full max-w-5xl mx-auto px-6 py-10" >
         {/* Mobile Tab Switcher */}
-        <div className="md:hidden mb-8 flex p-1 bg-secondary/50 rounded-lg">
+        < div className="md:hidden mb-8 flex p-1 bg-secondary/50 rounded-lg" >
           <button
             onClick={() => setActiveTab('confessions')}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'confessions' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
@@ -185,7 +218,7 @@ export default function Home() {
           >
             Live Chat
           </button>
-        </div>
+        </div >
 
         {activeTab === 'confessions' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -296,14 +329,15 @@ export default function Home() {
           <div className="max-w-2xl mx-auto">
             <Chat />
           </div>
-        )}
-      </main>
+        )
+        }
+      </main >
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-8 mt-auto bg-background/50">
+      < footer className="border-t border-border/40 py-8 mt-auto bg-background/50" >
         <div className="max-w-5xl mx-auto px-6 text-center text-sm text-muted-foreground">
           <p>
-            © {new Date().getFullYear()} AnonyChat. Created by{' '}
+            © {new Date().getFullYear()} Whisper Vault. Created by{' '}
             <a
               href="https://github.com/vivekisadev"
               target="_blank"

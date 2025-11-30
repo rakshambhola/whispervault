@@ -172,13 +172,17 @@ const createAnimation = (
       name: `${variant}-${start}${blur ? "-blur" : ""}`,
       css: `
        ::view-transition-group(root) {
-        animation-duration: 0.7s;
+        animation-duration: 0.5s;
         animation-timing-function: var(--expo-out);
+      }
+      @media (min-width: 768px) {
+        ::view-transition-group(root) {
+          animation-duration: 1s;
+        }
       }
             
       ::view-transition-new(root) {
         animation-name: reveal-light-${start}${blur ? "-blur" : ""};
-        ${blur ? "filter: blur(2px);" : ""}
       }
 
       ::view-transition-old(root),
@@ -194,24 +198,18 @@ const createAnimation = (
       @keyframes reveal-dark-${start}${blur ? "-blur" : ""} {
         from {
           clip-path: ${clipPath.from};
-          ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: ${clipPath.to};
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
 
       @keyframes reveal-light-${start}${blur ? "-blur" : ""} {
         from {
           clip-path: ${clipPath.from};
-          ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: ${clipPath.to};
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
       `,
@@ -222,7 +220,7 @@ const createAnimation = (
       name: `${variant}-${start}${blur ? "-blur" : ""}`,
       css: `
        ::view-transition-group(root) {
-        animation-duration: 0.7s;
+        animation-duration: 0.5s;
         animation-timing-function: var(--expo-out);
       }
             
@@ -244,24 +242,18 @@ const createAnimation = (
       @keyframes reveal-dark${blur ? "-blur" : ""} {
         from {
           clip-path: circle(0% at 50% 50%);
-          ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: circle(100.0% at 50% 50%);
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
 
       @keyframes reveal-light${blur ? "-blur" : ""} {
         from {
            clip-path: circle(0% at 50% 50%);
-           ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: circle(100.0% at 50% 50%);
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
       `,
@@ -307,16 +299,18 @@ const createAnimation = (
       return {
         name: `${variant}-${start}`,
         css: `
+        /* Mobile - Fast & No Blur */
         ::view-transition-group(root) {
-          animation-duration: 1s;
+          animation-duration: 0.5s;
           animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         ::view-transition-new(root) {
           mask: url('${svg}') center / 0 no-repeat;
           mask-origin: content-box;
-          animation: scale 1s forwards;
+          animation: scale 0.5s forwards;
           transform-origin: center;
+          will-change: mask-size;
         }
 
         ::view-transition-old(root),
@@ -331,6 +325,24 @@ const createAnimation = (
             mask-size: 350vmax;
           }
         }
+
+        /* Desktop - Slower & With Blur */
+        @media (min-width: 768px) {
+          ::view-transition-group(root) {
+            animation-duration: 1s;
+          }
+
+          ::view-transition-new(root) {
+            animation: scale-desktop 1s forwards;
+            filter: blur(2px);
+          }
+
+          @keyframes scale-desktop {
+            from { filter: blur(8px); }
+            50% { filter: blur(4px); }
+            to { mask-size: 350vmax; filter: none; }
+          }
+        }
         `,
       };
     }
@@ -338,17 +350,18 @@ const createAnimation = (
     return {
       name: `${variant}-${start}${blur ? "-blur" : ""}`,
       css: `
+      /* Mobile - Fast & No Blur */
       ::view-transition-group(root) {
-        animation-duration: 1s;
+        animation-duration: 0.5s;
         animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
       }
 
       ::view-transition-new(root) {
         mask: url('${svg}') ${start.replace("-", " ")} / 0 no-repeat;
         mask-origin: content-box;
-        animation: scale-${start}${blur ? "-blur" : ""} 1s forwards;
+        animation: scale-${start}${blur ? "-blur" : ""} 0.5s forwards;
         transform-origin: ${transformOrigin};
-        ${blur ? "filter: blur(2px);" : ""}
+        will-change: mask-size;
       }
 
       ::view-transition-old(root),
@@ -359,13 +372,31 @@ const createAnimation = (
       }
 
       @keyframes scale-${start}${blur ? "-blur" : ""} {
-        from {
-          ${blur ? "filter: blur(8px);" : ""}
-        }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           mask-size: 2000vmax;
-          ${blur ? "filter: none;" : ""}
+        }
+      }
+
+      /* Desktop - Slower & With Blur (if enabled) */
+      @media (min-width: 768px) {
+        ::view-transition-group(root) {
+          animation-duration: 1s;
+        }
+
+        ::view-transition-new(root) {
+          animation: scale-${start}${blur ? "-blur" : ""}-desktop 1s forwards;
+          ${blur ? "filter: blur(2px);" : ""}
+        }
+
+        @keyframes scale-${start}${blur ? "-blur" : ""}-desktop {
+          from {
+            ${blur ? "filter: blur(8px);" : ""}
+          }
+          ${blur ? "50% { filter: blur(4px); }" : ""}
+          to {
+            mask-size: 2000vmax;
+            ${blur ? "filter: none;" : ""}
+          }
         }
       }
       `,
@@ -411,7 +442,6 @@ const createAnimation = (
             
       ::view-transition-new(root) {
         animation-name: reveal-light-${start}${blur ? "-blur" : ""};
-        ${blur ? "filter: blur(2px);" : ""}
       }
 
       ::view-transition-old(root),
@@ -427,24 +457,18 @@ const createAnimation = (
       @keyframes reveal-dark-${start}${blur ? "-blur" : ""} {
         from {
           clip-path: ${clipPaths.darkFrom};
-          ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: ${clipPaths.darkTo};
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
 
       @keyframes reveal-light-${start}${blur ? "-blur" : ""} {
         from {
           clip-path: ${clipPaths.lightFrom};
-          ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: ${clipPaths.lightTo};
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
       `,
@@ -477,7 +501,7 @@ const createAnimation = (
       name: `${variant}-${start}${blur ? "-blur" : ""}`,
       css: `
        ::view-transition-group(root) {
-        animation-duration: 1s;
+        animation-duration: 0.5s;
         animation-timing-function: var(--expo-out);
       }
             
@@ -499,24 +523,18 @@ const createAnimation = (
       @keyframes reveal-dark-${start}${blur ? "-blur" : ""} {
         from {
           clip-path: circle(0% at ${clipPosition});
-          ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: circle(150.0% at ${clipPosition});
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
 
       @keyframes reveal-light-${start}${blur ? "-blur" : ""} {
         from {
            clip-path: circle(0% at ${clipPosition});
-           ${blur ? "filter: blur(8px);" : ""}
         }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           clip-path: circle(150.0% at ${clipPosition});
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
       `,
@@ -532,24 +550,19 @@ const createAnimation = (
       ::view-transition-new(root) {
         mask: url('${svg}') ${start.replace("-", " ")} / 0 no-repeat;
         mask-origin: content-box;
-        animation: scale-${start}${blur ? "-blur" : ""} 1s;
+        animation: scale-${start}${blur ? "-blur" : ""} 0.5s;
         transform-origin: ${transformOrigin};
-        ${blur ? "filter: blur(2px);" : ""}
+        will-change: mask-size;
       }
       ::view-transition-old(root),
       .dark::view-transition-old(root) {
-        animation: scale-${start}${blur ? "-blur" : ""} 1s;
+        animation: scale-${start}${blur ? "-blur" : ""} 0.5s;
         transform-origin: ${transformOrigin};
         z-index: -1;
       }
       @keyframes scale-${start}${blur ? "-blur" : ""} {
-        from {
-          ${blur ? "filter: blur(8px);" : ""}
-        }
-        ${blur ? "50% { filter: blur(4px); }" : ""}
         to {
           mask-size: 2000vmax;
-          ${blur ? "filter: blur(0px);" : ""}
         }
       }
     `,
