@@ -56,7 +56,7 @@ export default function Home() {
   // ... (keep existing code)
 
 
-
+  //this is for search functionality
   const filteredConfessions = confessions.filter(confession => {
     const matchesSearch = confession.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (confession.tags && confession.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
@@ -112,7 +112,7 @@ export default function Home() {
                 href="https://github.com/vivekisadev/whispervault"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/10 shadow-lg text-xs font-medium text-white hover:scale-105 hover:bg-black transition-all duration-300 group animate-[swing_3s_ease-in-out_infinite]"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-900/90 backdrop-blur-md border border-white/10 shadow-lg text-xs font-medium text-white hover:scale-105 hover:bg-black transition-all duration-300 group animate-[swing_3s_ease-in-out_infinite] whitespace-nowrap"
                 style={{
                   transformOrigin: 'top center',
                 }}
