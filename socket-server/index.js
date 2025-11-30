@@ -16,6 +16,7 @@ app.use(cors({
 }));
 
 const io = new Server(httpServer, {
+    maxHttpBufferSize: 1e8, // 100 MB
     cors: {
         origin: process.env.FRONTEND_URL || '*',
         methods: ['GET', 'POST'],
@@ -39,11 +40,19 @@ io.on('connection', (socket) => {
     io.emit('online-users', io.engine.clientsCount);
 
     socket.on('join-chat', (userId) => {
+        // Leave current room if any
+        const currentRoomId = userRooms.get(userId);
+        if (currentRoomId) {
+            socket.leave(currentRoomId);
+            userRooms.delete(userId);
+        }
+
         let roomId = null;
 
         // Find an available room with only 1 user
+        // AND ensure we haven't just matched with them (optional, simple implementation for now)
         for (const [id, room] of chatRooms.entries()) {
-            if (room.users.length === 1) {
+            if (room.users.length === 1 && !room.users.includes(userId)) {
                 roomId = id;
                 break;
             }
@@ -105,10 +114,12 @@ io.on('connection', (socket) => {
         if (room) {
             room.users = room.users.filter(id => id !== userId);
 
+            // Notify the OTHER user that their partner left
+            socket.to(roomId).emit('partner-disconnected');
+            socket.to(roomId).emit('user-left', { userCount: room.users.length });
+
             if (room.users.length === 0) {
                 chatRooms.delete(roomId);
-            } else {
-                socket.to(roomId).emit('user-left', { userCount: room.users.length });
             }
         }
 
@@ -118,6 +129,11 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
+
+        // We don't have userId here easily unless we map socket.id to userId
+        // But we can find the room the socket was in
+        // Ideally, we should map socket.id -> userId or socket.id -> roomId
+
         io.emit('online-users', io.engine.clientsCount);
     });
 });

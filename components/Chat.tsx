@@ -151,11 +151,14 @@ export default function Chat() {
             socket.emit('leave-chat', userId);
             setMessages([]);
             setRoomId(null);
+            setUserCount(0); // Reset user count
             setIsPartnerDisconnected(false);
             setSelectedImage(null);
+
+            // Wait a bit before re-joining to ensure server processes the leave
             setTimeout(() => {
                 socket.emit('join-chat', userId);
-            }, 500);
+            }, 300);
         }
     };
 
