@@ -114,7 +114,7 @@ export default function Home() {
               <div className="w-px h-4 bg-gradient-to-b from-border/50 to-transparent ml-4"></div>
               {/* Tag */}
               <a
-                href="https://github.com/vivekisadev/anony-chat"
+                href="https://github.com/vivekisadev/whispervault"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 px-2 py-1 rounded-md bg-background/60 backdrop-blur-md border border-white/10 shadow-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all duration-300 group animate-[swing_3s_ease-in-out_infinite]"
