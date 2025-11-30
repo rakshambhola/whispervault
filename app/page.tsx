@@ -26,7 +26,17 @@ export default function Home() {
   const [starCount, setStarCount] = useState<number | null>(null);
 
   const fetchConfessions = async () => {
-    // ... (keep existing fetchConfessions)
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/confessions');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setConfessions(data.confessions || []);
+    } catch (error) {
+      console.error('Error fetching confessions:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {

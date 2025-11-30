@@ -8,6 +8,8 @@ import { generateId } from '@/lib/utils';
 const chatRooms = new Map<string, ChatRoom>();
 const userRooms = new Map<string, string>();
 const socketUsers = new Map<string, string>();
+const lastPartners = new Map<string, string[]>();
+let waitingQueue: { userId: string; socketId: string }[] = [];
 
 export async function GET(req: NextRequest) {
     const res = (req as any).res;
@@ -28,42 +30,106 @@ export async function GET(req: NextRequest) {
                 // Store socket-user mapping
                 socketUsers.set(socket.id, userId);
 
-                let roomId: string | null = null;
+                // Check if user is already in a room or queue, remove them if so to prevent duplicates
+                if (waitingQueue.some(u => u.userId === userId)) {
+                    waitingQueue = waitingQueue.filter(u => u.userId !== userId);
+                }
 
-                // Find all available rooms (rooms with exactly 1 user)
-                const availableRooms: string[] = [];
-                for (const [id, room] of chatRooms.entries()) {
-                    if (room.users.length === 1 && !room.users.includes(userId)) {
-                        availableRooms.push(id);
+                // Cleanup any existing room for this user (though client should have sent leave-chat)
+                const existingRoomId = userRooms.get(userId);
+                if (existingRoomId) {
+                    handleCleanup(userId);
+                }
+
+                // Try to find a partner from the queue
+                let partnerSocketId: string | null = null;
+                let partnerUserId: string | null = null;
+
+                // Get recent partners history (default to empty array)
+                const recentPartners = lastPartners.get(userId) || [];
+
+                // We need to find a valid partner in the queue
+                let partnerIndex = -1;
+
+                for (let i = 0; i < waitingQueue.length; i++) {
+                    const potential = waitingQueue[i];
+
+                    // Skip if it's the user themselves
+                    if (potential.userId === userId) continue;
+
+                    // Skip if this person is in the recent partners history
+                    if (recentPartners.includes(potential.userId)) continue;
+
+                    // Check if socket is still active
+                    const partnerSocket = io.sockets.sockets.get(potential.socketId);
+                    if (!partnerSocket) {
+                        // Remove stale user from queue and decrement index to not skip next one
+                        waitingQueue.splice(i, 1);
+                        i--;
+                        continue;
                     }
+
+                    // Found a valid partner!
+                    partnerIndex = i;
+                    partnerSocketId = potential.socketId;
+                    partnerUserId = potential.userId;
+                    break;
                 }
 
-                // Pick a random room if available
-                if (availableRooms.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * availableRooms.length);
-                    roomId = availableRooms[randomIndex];
-                }
+                if (partnerSocketId && partnerUserId && partnerIndex !== -1) {
+                    // Remove partner from queue
+                    waitingQueue.splice(partnerIndex, 1);
 
-                if (!roomId) {
-                    roomId = generateId();
+                    // Match found! Create a room
+                    const roomId = generateId();
+
                     chatRooms.set(roomId, {
                         id: roomId,
-                        users: [],
+                        users: [partnerUserId, userId],
                         messages: [],
                         createdAt: Date.now(),
                     });
-                }
 
-                const room = chatRooms.get(roomId)!;
-                // Prevent duplicate join
-                if (!room.users.includes(userId)) {
-                    room.users.push(userId);
                     userRooms.set(userId, roomId);
-                    socket.join(roomId);
-                }
+                    userRooms.set(partnerUserId, roomId);
 
-                socket.emit('room-joined', { roomId, userCount: room.users.length });
-                socket.to(roomId).emit('user-joined', { userCount: room.users.length });
+                    // Update history for current user
+                    let userHistory = lastPartners.get(userId) || [];
+                    userHistory.unshift(partnerUserId);
+                    if (userHistory.length > 5) userHistory.pop(); // Keep last 5
+                    lastPartners.set(userId, userHistory);
+
+                    // Update history for partner
+                    let partnerHistory = lastPartners.get(partnerUserId) || [];
+                    partnerHistory.unshift(userId);
+                    if (partnerHistory.length > 5) partnerHistory.pop(); // Keep last 5
+                    lastPartners.set(partnerUserId, partnerHistory);
+
+                    // Join current user
+                    socket.join(roomId);
+
+                    // Join partner user
+                    const partnerSocket = io.sockets.sockets.get(partnerSocketId);
+                    if (partnerSocket) {
+                        partnerSocket.join(roomId);
+
+                        // Notify both
+                        io.to(roomId).emit('room-joined', { roomId, userCount: 2 });
+                        io.to(roomId).emit('user-joined', { userCount: 2 });
+                    } else {
+                        // Edge case: Partner disconnected right at match time
+                        // Put current user back in queue
+                        waitingQueue.unshift({ userId, socketId: socket.id });
+                        chatRooms.delete(roomId);
+                        userRooms.delete(userId);
+                        userRooms.delete(partnerUserId);
+                        // Revert history update since match failed (optional, but cleaner)
+                    }
+
+                } else {
+                    // No partner found, add to waiting queue
+                    waitingQueue.push({ userId, socketId: socket.id });
+                }
             });
 
             socket.on('send-message', (data: { userId: string; content: string; image?: string }) => {
@@ -93,6 +159,9 @@ export async function GET(req: NextRequest) {
             });
 
             const handleCleanup = (userId: string) => {
+                // Remove from queue if present
+                waitingQueue = waitingQueue.filter(u => u.userId !== userId);
+
                 const roomId = userRooms.get(userId);
                 if (!roomId) return;
 

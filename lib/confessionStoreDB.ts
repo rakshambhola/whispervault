@@ -8,15 +8,18 @@ import { cacheGet, cacheSet, cacheDel } from './db/redis';
  */
 class ConfessionStoreDB {
 
+    // In-memory fallback
+    private fallbackConfessions: Confession[] = [];
+
     // Helper to map DB result to App type
     private mapConfession(c: any): Confession {
         return {
             id: c.id,
             content: c.content,
-            timestamp: c.timestamp.getTime(),
+            timestamp: c.timestamp instanceof Date ? c.timestamp.getTime() : new Date(c.timestamp).getTime(),
             upvotes: c.upvotes,
             downvotes: c.downvotes,
-            replies: c.replies ? c.replies.map(this.mapReply) : [],
+            replies: c.replies ? c.replies.map((r: any) => this.mapReply(r)) : [],
             tags: c.tags,
             isReported: c.isReported,
             reportCount: c.reportCount,
@@ -29,7 +32,7 @@ class ConfessionStoreDB {
             id: r.id,
             confessionId: r.confessionId,
             content: r.content,
-            timestamp: r.timestamp.getTime(),
+            timestamp: r.timestamp instanceof Date ? r.timestamp.getTime() : new Date(r.timestamp).getTime(),
             upvotes: r.upvotes,
             downvotes: r.downvotes,
         };
@@ -39,14 +42,19 @@ class ConfessionStoreDB {
     // Retrieval methods with caching
     // ---------------------------------------------------------------------
     async getAllConfessions(): Promise<Confession[]> {
-        // Fetch all confessions directly from DB without caching
-        const confessions = await prisma.confession.findMany({
-            where: { isReported: false },
-            orderBy: { timestamp: 'desc' },
-            include: { replies: true },
-        });
+        try {
+            // Fetch all confessions directly from DB without caching
+            const confessions = await prisma.confession.findMany({
+                where: { isReported: false },
+                orderBy: { timestamp: 'desc' },
+                include: { replies: true },
+            });
 
-        return confessions.map(c => this.mapConfession(c));
+            return confessions.map(c => this.mapConfession(c));
+        } catch (error) {
+            console.error('Database connection failed, using in-memory fallback:', error);
+            return this.fallbackConfessions;
+        }
     }
 
     async getConfession(id: string): Promise<Confession | null> {
@@ -57,17 +65,22 @@ class ConfessionStoreDB {
             return cached;
         }
 
-        // Fetch from DB
-        const confession = await prisma.confession.findUnique({
-            where: { id },
-            include: { replies: true },
-        });
+        try {
+            // Fetch from DB
+            const confession = await prisma.confession.findUnique({
+                where: { id },
+                include: { replies: true },
+            });
 
-        if (confession) {
-            const mapped = this.mapConfession(confession);
-            // Cache for 5 minutes
-            await cacheSet(cacheKey, mapped, 300);
-            return mapped;
+            if (confession) {
+                const mapped = this.mapConfession(confession);
+                // Cache for 5 minutes
+                await cacheSet(cacheKey, mapped, 300);
+                return mapped;
+            }
+        } catch (error) {
+            console.error('Database error in getConfession:', error);
+            return this.fallbackConfessions.find(c => c.id === id) || null;
         }
 
         return null;
@@ -77,21 +90,41 @@ class ConfessionStoreDB {
     // Creation / mutation methods
     // ---------------------------------------------------------------------
     async createConfession(content: string, tags?: string[], ip?: string): Promise<Confession> {
-        const confession = await prisma.confession.create({
-            data: {
+        try {
+            const confession = await prisma.confession.create({
+                data: {
+                    content,
+                    tags: tags || [],
+                    ip,
+                    timestamp: new Date(),
+                },
+                include: { replies: true },
+            });
+
+            // Invalidate cache
+            await cacheDel('confessions:all');
+            await cacheDel('confessions:trending');
+
+            return this.mapConfession(confession);
+        } catch (error) {
+            console.error('Database error in createConfession, using fallback:', error);
+
+            const newConfession: Confession = {
+                id: generateId(),
                 content,
                 tags: tags || [],
-                ip,
-                timestamp: new Date(),
-            },
-            include: { replies: true },
-        });
+                timestamp: Date.now(),
+                upvotes: 0,
+                downvotes: 0,
+                replies: [],
+                isReported: false,
+                reportCount: 0,
+                ip
+            };
 
-        // Invalidate cache
-        await cacheDel('confessions:all');
-        await cacheDel('confessions:trending');
-
-        return this.mapConfession(confession);
+            this.fallbackConfessions.unshift(newConfession);
+            return newConfession;
+        }
     }
 
     async addReply(confessionId: string, content: string): Promise<Reply | null> {
