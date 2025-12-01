@@ -33,8 +33,6 @@ class ConfessionStoreDB {
             confessionId: r.confessionId,
             content: r.content,
             timestamp: r.timestamp instanceof Date ? r.timestamp.getTime() : new Date(r.timestamp).getTime(),
-            upvotes: r.upvotes,
-            downvotes: r.downvotes,
         };
     }
 
@@ -169,26 +167,7 @@ class ConfessionStoreDB {
         }
     }
 
-    async voteReply(confessionId: string, replyId: string, voteType: 'upvote' | 'downvote'): Promise<boolean> {
-        try {
-            await prisma.reply.update({
-                where: { id: replyId },
-                data: {
-                    [voteType === 'upvote' ? 'upvotes' : 'downvotes']: {
-                        increment: 1,
-                    },
-                },
-            });
 
-            // Invalidate cache
-            await cacheDel(`confession:${confessionId}`);
-            await cacheDel('confessions:all');
-
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
 
     async removeVoteConfession(confessionId: string, voteType: 'upvote' | 'downvote'): Promise<boolean> {
         try {
@@ -363,8 +342,6 @@ class ConfessionStoreDB {
                                 id: r.id,
                                 content: r.content,
                                 timestamp: new Date(r.timestamp),
-                                upvotes: r.upvotes,
-                                downvotes: r.downvotes,
                             })),
                         },
                     },
