@@ -25,8 +25,8 @@ export default function Home() {
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [starCount, setStarCount] = useState<number | null>(null);
 
-  const fetchConfessions = async () => {
-    setIsLoading(true);
+  const fetchConfessions = async (isBackground = false) => {
+    if (!isBackground) setIsLoading(true);
     try {
       const res = await fetch('/api/confessions');
       if (!res.ok) throw new Error('Failed to fetch');
@@ -35,9 +35,15 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching confessions:', error);
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      fetchConfessions(true);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     fetchConfessions();
@@ -299,25 +305,76 @@ export default function Home() {
                 />
               </div>
 
-              {/* Tag Filter */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <button
-                  onClick={() => setSelectedTag('')}
-                  className={`px-3 py-1 rounded-full border border-border/40 text-sm ${selectedTag === '' ? 'bg-primary text-primary-foreground' : 'bg-card/20 text-foreground'}`}
-                  suppressHydrationWarning
-                >
-                  All Tags
-                </button>
-                {uniqueTags.map(tag => (
+              {/* Tag Filter Dropdown */}
+              <div className="flex items-center justify-between mb-6 z-30">
+                <span className="text-sm font-medium text-muted-foreground">Sort by tags</span>
+                <div className="relative inline-block text-left">
                   <button
-                    key={tag}
-                    onClick={() => setSelectedTag(tag)}
-                    className={`px-3 py-1 rounded-full border border-border/40 text-sm ${selectedTag === tag ? 'bg-primary text-primary-foreground' : 'bg-card/20 text-foreground'}`}
-                    suppressHydrationWarning
+                    onClick={() => document.getElementById('tag-dropdown')?.classList.toggle('hidden')}
+                    className="inline-flex items-center justify-between min-w-[140px] px-4 py-2 text-sm font-medium text-foreground bg-background/50 backdrop-blur-md border border-white/10 rounded-xl shadow-sm hover:bg-secondary/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200"
                   >
-                    #{tag}
+                    <span>{selectedTag ? `#${selectedTag}` : 'All Tags'}</span>
+                    <svg className="-mr-1 ml-2 h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
                   </button>
-                ))}
+
+                  <div
+                    id="tag-dropdown"
+                    className="hidden absolute right-0 mt-2 w-56 origin-top-right bg-background/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in-95 duration-200 z-50"
+                  >
+                    <div className="py-1 max-h-60 overflow-y-auto custom-scrollbar">
+                      <button
+                        onClick={() => {
+                          setSelectedTag('');
+                          document.getElementById('tag-dropdown')?.classList.add('hidden');
+                        }}
+                        className={`block w-full text-left px-4 py-2.5 text-sm ${selectedTag === '' ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
+                      >
+                        All Tags
+                      </button>
+                      {uniqueTags.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => {
+                            setSelectedTag(tag);
+                            document.getElementById('tag-dropdown')?.classList.add('hidden');
+                          }}
+                          className={`block w-full text-left px-4 py-2.5 text-sm ${selectedTag === tag ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Backdrop to close dropdown on click outside */}
+                <div
+                  className="fixed inset-0 z-[-1] hidden"
+                  onClick={(e) => {
+                    const dropdown = document.getElementById('tag-dropdown');
+                    if (dropdown && !dropdown.classList.contains('hidden')) {
+                      dropdown.classList.add('hidden');
+                      e.currentTarget.classList.add('hidden');
+                    }
+                  }}
+                  id="dropdown-backdrop"
+                ></div>
+                <script dangerouslySetInnerHTML={{
+                  __html: `
+                    // Simple click outside handler
+                    document.addEventListener('click', function(event) {
+                      const dropdown = document.getElementById('tag-dropdown');
+                      const button = event.target.closest('button');
+                      const isDropdownButton = button && button.innerText.includes('All Tags') || (button && button.innerText.includes('#'));
+                      
+                      if (dropdown && !dropdown.classList.contains('hidden') && !dropdown.contains(event.target) && !isDropdownButton) {
+                        dropdown.classList.add('hidden');
+                      }
+                    });
+                  `
+                }} />
               </div>
 
               {/* List */}

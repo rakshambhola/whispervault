@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Confession } from '@/types';
+import { Confession, Reply } from '@/types';
 import { formatTimestamp, calculateVoteScore, getUserId, hasUserVoted, saveUserVote, removeUserVote } from '@/lib/utils';
-import { ArrowUp, ArrowDown, MessageCircle, Flag, Send } from 'lucide-react';
+import { ArrowUp, ArrowDown, MessageCircle, Flag, Send, Share2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import ShareModal from '@/components/ShareModal';
 
 interface ConfessionCardProps {
     confession: Confession;
@@ -19,6 +20,8 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
     const [replyContent, setReplyContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareReply, setShareReply] = useState<Reply | undefined>(undefined);
     const userId = getUserId();
 
     // Optimistic UI state
@@ -68,11 +71,6 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
             // Server sync
             const action = userVote === voteType ? 'remove' : undefined;
 
-            // If switching votes, we might need two requests or a smarter API. 
-            // The current API seems to handle "add" but not explicit "switch".
-            // However, the previous logic did a remove then add.
-            // Let's replicate the logic but in background.
-
             if (previousUserVote && previousUserVote !== voteType && action !== 'remove') {
                 // Remove old vote first
                 await fetch('/api/vote', {
@@ -97,12 +95,6 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                     action,
                 }),
             });
-
-            // We don't strictly need onUpdate() anymore for the vote count, 
-            // but we might want it for other things. 
-            // Calling it might overwrite our optimistic state if the server is slow/stale,
-            // so we can skip it or debounce it. For now, let's skip it to keep UI stable.
-            // onUpdate(); 
         } catch (error) {
             console.error('Vote failed:', error);
             // Revert on error
@@ -153,9 +145,6 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
             setReplyContent('');
             setReplySuccess(true);
             setTimeout(() => setReplySuccess(false), 3000);
-
-            // Optional: Notify parent if needed, but we avoid full re-fetch
-            // onUpdate(); 
         } catch (error) {
             console.error('Reply failed:', error);
         } finally {
@@ -179,6 +168,11 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
         } catch (error) {
             console.error('Report failed:', error);
         }
+    };
+
+    const handleShare = (reply?: Reply) => {
+        setShareReply(reply);
+        setShowShareModal(true);
     };
 
     return (
@@ -217,7 +211,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleVote('upvote')}
-                                    className={`h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-background ${userVote === 'upvote' ? 'text-green-500' : 'text-muted-foreground'
+                                    className={`h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-green-500/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all duration-300 ${userVote === 'upvote' ? 'text-green-500 hover:text-green-400' : 'text-muted-foreground hover:text-white'
                                         }`}
                                 >
                                     <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -230,7 +224,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleVote('downvote')}
-                                    className={`h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-background ${userVote === 'downvote' ? 'text-red-500' : 'text-muted-foreground'
+                                    className={`h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-red-500/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 ${userVote === 'downvote' ? 'text-red-500 hover:text-red-400' : 'text-muted-foreground hover:text-white'
                                         }`}
                                 >
                                     <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -241,21 +235,50 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setShowReplies(!showReplies)}
-                                className="h-8 sm:h-10 px-2 sm:px-3 text-muted-foreground hover:text-primary hover:bg-secondary/50 gap-1.5 sm:gap-2 rounded-lg transition-colors"
+                                className="h-8 sm:h-10 px-2 sm:px-3 text-muted-foreground hover:text-white hover:bg-primary/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(236,72,153,0.3)] gap-1.5 sm:gap-2 rounded-lg transition-all duration-300"
                             >
                                 <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                                 <span className="text-xs sm:text-sm font-medium">{localReplies.length}</span>
                             </Button>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleShare()}
+                                className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground hover:text-white hover:bg-primary/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(236,72,153,0.3)] rounded-lg transition-all duration-300"
+                            >
+                                <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                            </Button>
                         </div>
 
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowReportModal(true)}
-                            className="h-8 w-8 sm:h-9 sm:w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
-                        >
-                            <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        </Button>
+                        <div className="relative">
+                            {showReportModal && (
+                                <div className="absolute bottom-full right-0 mb-2 w-48 bg-background/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="p-2 space-y-1">
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Report as...
+                                        </div>
+                                        {['Spam', 'Harassment', 'Inappropriate', 'Other'].map((reason) => (
+                                            <button
+                                                key={reason}
+                                                onClick={() => handleReport(reason)}
+                                                className="w-full text-left px-2 py-1.5 text-sm rounded-lg hover:bg-white/10 hover:text-white transition-colors text-foreground/80"
+                                            >
+                                                {reason}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowReportModal(!showReportModal)}
+                                className={`h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-300 ${showReportModal ? 'text-white bg-destructive/20 backdrop-blur-xl shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}
+                            >
+                                <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Replies Section */}
@@ -287,11 +310,21 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                             {/* Replies List */}
                             <div className="space-y-4">
                                 {(localReplies || []).map((reply, index) => (
-                                    <div key={reply.id || index} className="glass-message px-4 py-3 animate-in slide-in-from-bottom-2 fade-in duration-300">
+                                    <div key={reply.id || index} className="rounded-xl bg-secondary/30 backdrop-blur-md border border-border/50 shadow-sm px-3 py-2.5 animate-in slide-in-from-bottom-2 fade-in duration-300 group relative">
                                         <div className="relative z-10">
                                             <p className="text-sm text-foreground mb-2 leading-relaxed">{reply.content}</p>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
-                                                <span>{formatTimestamp(reply.timestamp)}</span>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
+                                                    <span>{formatTimestamp(reply.timestamp)}</span>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleShare(reply)}
+                                                    className="h-6 w-6 text-muted-foreground hover:text-white hover:bg-primary/20 hover:backdrop-blur-xl hover:shadow-[0_0_10px_rgba(236,72,153,0.2)] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                >
+                                                    <Share2 className="h-3 w-3" />
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>
@@ -302,35 +335,18 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                 </CardContent>
             </Card>
 
-            {/* Report Modal */}
-            {showReportModal && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <Card className="max-w-md w-full shadow-lg border-border bg-card">
-                        <CardContent className="p-6">
-                            <h3 className="text-lg font-semibold mb-4 text-foreground">Report Confession</h3>
-                            <div className="space-y-2">
-                                {['Spam', 'Harassment', 'Inappropriate Content', 'Other'].map((reason) => (
-                                    <Button
-                                        key={reason}
-                                        onClick={() => handleReport(reason)}
-                                        variant="ghost"
-                                        className="w-full justify-start h-10 hover:bg-secondary"
-                                    >
-                                        {reason}
-                                    </Button>
-                                ))}
-                            </div>
-                            <Separator className="my-4" />
-                            <Button
-                                onClick={() => setShowReportModal(false)}
-                                variant="outline"
-                                className="w-full"
-                            >
-                                Cancel
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
+
+
+            {/* Share Modal */}
+            {showShareModal && (
+                <ShareModal
+                    confession={confession}
+                    reply={shareReply}
+                    onClose={() => {
+                        setShowShareModal(false);
+                        setShareReply(undefined);
+                    }}
+                />
             )}
         </>
     );

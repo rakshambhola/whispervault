@@ -293,9 +293,9 @@ export default function Chat() {
                                 className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} animate-fade-in`}
                             >
                                 <div
-                                    className={`max-w-[70%] px-4 py-2 glass-message ${isOwnMessage
-                                        ? 'text-foreground'
-                                        : 'text-foreground'
+                                    className={`max-w-[70%] px-4 py-2 backdrop-blur-md border rounded-2xl shadow-sm ${isOwnMessage
+                                        ? 'bg-primary/20 border-primary/20 text-foreground rounded-tr-sm'
+                                        : 'bg-secondary/30 border-border/50 text-foreground rounded-tl-sm'
                                         }`}
                                 >
                                     <div className="relative z-10">

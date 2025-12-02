@@ -21,10 +21,10 @@ export default function GuidelinesModal() {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="w-full max-w-md bg-background/60 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
 
                 {/* Header */}
-                <div className="p-6 pb-4 border-b border-border bg-secondary/10">
+                <div className="p-6 pb-4 border-b border-white/10 bg-white/5">
                     <div className="flex items-center gap-2 mb-2">
                         <Shield className="h-6 w-6 text-primary" />
                         <h2 className="text-xl font-bold text-foreground">Community Guidelines</h2>
@@ -36,7 +36,7 @@ export default function GuidelinesModal() {
 
                 {/* Content */}
                 <div className="p-6 space-y-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/20 border border-border/50">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                         <Heart className="h-5 w-5 text-pink-500 mt-0.5 shrink-0" />
                         <div>
                             <h4 className="font-semibold text-foreground text-sm">Be Respectful</h4>
@@ -44,7 +44,7 @@ export default function GuidelinesModal() {
                         </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/20 border border-border/50">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                         <UserX className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
                         <div>
                             <h4 className="font-semibold text-foreground text-sm">Stay Anonymous</h4>
@@ -52,7 +52,7 @@ export default function GuidelinesModal() {
                         </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/20 border border-border/50">
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                         <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
                         <div>
                             <h4 className="font-semibold text-foreground text-sm">No Hate Speech</h4>
