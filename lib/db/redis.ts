@@ -172,5 +172,19 @@ export async function unblockIP(ip: string): Promise<boolean> {
     }
 }
 
+export async function getBlockedIPs(): Promise<string[]> {
+    const client = getRedisClient();
+    if (!client) return [];
+
+    try {
+        const keys = await client.keys('blocked:ip:*');
+        // Extract IP from key "blocked:ip:127.0.0.1" -> "127.0.0.1"
+        return keys.map(key => key.replace('blocked:ip:', ''));
+    } catch (error) {
+        console.error('Redis get blocked IPs error:', error);
+        return [];
+    }
+}
+
 // Note: Graceful shutdown (process.on) is not available in Next.js Edge Runtime
 // The middleware uses Edge Runtime, so we can't use Node.js APIs like process.on here

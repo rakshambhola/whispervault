@@ -31,6 +31,8 @@ export default function Chat() {
     const [viewingImage, setViewingImage] = useState<string | null>(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+    const [myUserId, setMyUserId] = useState<string | null>(null);
+
     useEffect(() => {
         // Connect to external Socket.IO server (deployed separately)
         const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -45,7 +47,11 @@ export default function Chat() {
         newSocket.on('connect', () => {
             console.log('Connected to chat');
             setIsConnected(true);
-            newSocket.emit('join-chat', userId);
+            newSocket.emit('join-chat');
+        });
+
+        newSocket.on('your-userid', (id: string) => {
+            setMyUserId(id);
         });
 
         newSocket.on('room-joined', (data: { roomId: string; userCount: number }) => {
@@ -77,15 +83,16 @@ export default function Chat() {
 
         newSocket.on('disconnect', () => {
             setIsConnected(false);
+            setMyUserId(null);
         });
 
         setSocket(newSocket);
 
         return () => {
-            newSocket.emit('leave-chat', userId);
+            newSocket.emit('leave-chat');
             newSocket.close();
         };
-    }, [userId]);
+    }, []);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -128,36 +135,36 @@ export default function Chat() {
         if ((!inputMessage.trim() && !selectedImage) || !socket || !isConnected) return;
 
         socket.emit('send-message', {
-            userId,
             content: inputMessage,
             image: selectedImage
         });
 
         setInputMessage('');
         setSelectedImage(null);
-        socket.emit('typing', { userId, isTyping: false });
+        socket.emit('typing', { isTyping: false });
     };
 
     const handleTyping = (value: string) => {
         setInputMessage(value);
 
         if (socket && isConnected) {
-            socket.emit('typing', { userId, isTyping: value.length > 0 });
+            socket.emit('typing', { isTyping: value.length > 0 });
         }
     };
 
     const handleLeaveChat = () => {
         if (socket) {
-            socket.emit('leave-chat', userId);
+            socket.emit('leave-chat');
             setMessages([]);
             setRoomId(null);
             setUserCount(0); // Reset user count
             setIsPartnerDisconnected(false);
             setSelectedImage(null);
+            setMyUserId(null);
 
             // Wait a bit before re-joining to ensure server processes the leave
             setTimeout(() => {
-                socket.emit('join-chat', userId);
+                socket.emit('join-chat');
             }, 300);
         }
     };
@@ -286,7 +293,7 @@ export default function Chat() {
 
                 <div className="space-y-3">
                     {messages.map((message) => {
-                        const isOwnMessage = message.userId === userId;
+                        const isOwnMessage = message.userId === myUserId;
                         return (
                             <div
                                 key={message.id}

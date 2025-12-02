@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { confessionStoreDB as confessionStore } from '@/lib/confessionStoreDB';
+import { getBlockedIPs } from '@/lib/db/redis';
 
 // Force Node.js runtime (required for Mongoose)
 export const runtime = 'nodejs';
@@ -16,15 +17,16 @@ export async function GET() {
 
         const reports = await confessionStore.getReportedConfessions();
         const allConfessions = await confessionStore.getAllConfessions();
+        const blockedIps = await getBlockedIPs();
 
         return NextResponse.json({
             reports,
-            blockedIps: [], // Redis-based IP blocking, handled separately
+            blockedIps,
             allConfessions,
             stats: {
                 totalConfessions: allConfessions.length,
                 totalReports: reports.length,
-                totalBlockedIps: 0, // Would need Redis query to get this
+                totalBlockedIps: blockedIps.length,
             },
         });
     } catch (error) {

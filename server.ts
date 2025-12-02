@@ -35,7 +35,9 @@ app.prepare().then(() => {
     const io = new SocketIOServer(server, {
         path: '/api/socket',
         cors: {
-            origin: '*',
+            origin: process.env.NODE_ENV === 'production'
+                ? 'https://whispervault.vercel.app'
+                : '*',
             methods: ['GET', 'POST'],
         },
     });
@@ -54,9 +56,14 @@ app.prepare().then(() => {
         // Send current count immediately
         broadcastOnlineCount();
 
-        socket.on('join-chat', (userId: string) => {
-            // Bind userId to this socket session
+        socket.on('join-chat', () => {
+            // Generate a long, unique random ID for this session
+            // This ensures unlimited unique IDs and decouples from socket.id
+            const userId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`;
             socket.data.userId = userId;
+
+            // Tell the client their assigned User ID
+            socket.emit('your-userid', userId);
 
             let roomId: string | null = null;
 
