@@ -56,7 +56,38 @@ app.prepare().then(() => {
         // Send current count immediately
         broadcastOnlineCount();
 
+        // Helper to clean up user session
+        const cleanupUserSession = (socket: any) => {
+            const userId = socket.data.userId;
+            if (!userId) return;
+
+            const roomId = userRooms.get(userId);
+            if (roomId) {
+                const room = chatRooms.get(roomId);
+                if (room) {
+                    room.users = room.users.filter(id => id !== userId);
+
+                    if (room.users.length === 0) {
+                        chatRooms.delete(roomId);
+                    } else {
+                        socket.to(roomId).emit('partner-disconnected');
+                        socket.to(roomId).emit('user-left', { userCount: room.users.length });
+                    }
+                }
+                socket.leave(roomId);
+            }
+
+            userRooms.delete(userId);
+            socket.data.userId = null;
+            broadcastOnlineCount();
+        };
+
         socket.on('join-chat', () => {
+            // If user is already in a session, clean it up first
+            if (socket.data.userId) {
+                cleanupUserSession(socket);
+            }
+
             // Generate a long, unique random ID for this session
             // This ensures unlimited unique IDs and decouples from socket.id
             const userId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`;
@@ -116,7 +147,16 @@ app.prepare().then(() => {
             };
 
             room.messages.push(message);
-            io.to(roomId).emit('new-message', message);
+
+            // Send to sender (with their ID)
+            socket.emit('new-message', message);
+
+            // Send to partner (with masked ID)
+            // We use 'stranger' as the ID so the client knows it's not them
+            socket.to(roomId).emit('new-message', {
+                ...message,
+                userId: 'stranger'
+            });
         });
 
         socket.on('typing', (data: { isTyping: boolean }) => {
@@ -129,56 +169,12 @@ app.prepare().then(() => {
         });
 
         socket.on('leave-chat', () => {
-            const userId = socket.data.userId;
-            if (!userId) return;
-
-            const roomId = userRooms.get(userId);
-            if (!roomId) return;
-
-            const room = chatRooms.get(roomId);
-            if (room) {
-                room.users = room.users.filter(id => id !== userId);
-
-                if (room.users.length === 0) {
-                    chatRooms.delete(roomId);
-                } else {
-                    socket.to(roomId).emit('partner-disconnected');
-                    socket.to(roomId).emit('user-left', { userCount: room.users.length });
-                }
-            }
-
-            userRooms.delete(userId);
-            socket.leave(roomId);
-
-            // Clear session data
-            socket.data.userId = null;
-
-            // Update online count
-            broadcastOnlineCount();
+            cleanupUserSession(socket);
         });
 
         socket.on('disconnect', () => {
             console.log('User disconnected:', socket.id);
-            const userId = socket.data.userId;
-
-            if (!userId) return;
-
-            const roomId = userRooms.get(userId);
-            if (roomId) {
-                const room = chatRooms.get(roomId);
-                if (room && room.users.includes(userId)) {
-                    room.users = room.users.filter(id => id !== userId);
-
-                    if (room.users.length === 0) {
-                        chatRooms.delete(roomId);
-                    } else {
-                        socket.to(roomId).emit('partner-disconnected');
-                        socket.to(roomId).emit('user-left', { userCount: room.users.length });
-                    }
-                }
-                userRooms.delete(userId);
-                broadcastOnlineCount();
-            }
+            cleanupUserSession(socket);
         });
     });
 

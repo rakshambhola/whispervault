@@ -46,12 +46,13 @@ export default function Chat() {
 
         newSocket.on('connect', () => {
             console.log('Connected to chat');
-            setIsConnected(true);
+            // Don't set isConnected here yet, wait for identity
             newSocket.emit('join-chat');
         });
 
         newSocket.on('your-userid', (id: string) => {
             setMyUserId(id);
+            setIsConnected(true); // Now we are fully connected with identity
         });
 
         newSocket.on('room-joined', (data: { roomId: string; userCount: number }) => {
