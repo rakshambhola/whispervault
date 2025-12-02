@@ -180,7 +180,7 @@ app.prepare().then(() => {
 
     console.log('Socket.io initialized');
 
-    server.listen(port, () => {
+    server.listen(port, '0.0.0.0', () => {
         console.log(`> Ready on http://${hostname}:${port}`);
     });
 });
