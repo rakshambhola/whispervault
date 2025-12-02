@@ -155,10 +155,16 @@ export default function AdminPage() {
                                                     {formatTimestamp(confession.timestamp)}
                                                 </span>
                                             </div>
-                                            <Button variant="destructive" size="sm" onClick={() => handleAction('delete_confession', { id: confession.id })}>
-                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                Delete Post
-                                            </Button>
+                                            <div className="flex gap-2">
+                                                <Button variant="outline" size="sm" onClick={() => handleAction('dismiss_report', { id: confession.id })}>
+                                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                                    Dismiss
+                                                </Button>
+                                                <Button variant="destructive" size="sm" onClick={() => handleAction('delete_confession', { id: confession.id })}>
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Delete Post
+                                                </Button>
+                                            </div>
                                         </div>
                                         <p className="text-foreground whitespace-pre-wrap mb-4">{confession.content}</p>
                                         <div className="flex flex-wrap gap-2">

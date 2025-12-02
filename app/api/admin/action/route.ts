@@ -26,6 +26,13 @@ export async function POST(request: NextRequest) {
                 }
                 break;
 
+            case 'dismiss_report':
+                if (id) {
+                    await confessionStore.dismissReport(id);
+                    return NextResponse.json({ success: true });
+                }
+                break;
+
             case 'delete_reply':
                 if (confessionId && replyId) {
                     await confessionStore.deleteReply(confessionId, replyId);

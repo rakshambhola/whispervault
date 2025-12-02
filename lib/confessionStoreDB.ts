@@ -203,15 +203,15 @@ class ConfessionStoreDB {
             const c = await prisma.confession.update({
                 where: { id: confessionId },
                 data: {
-                    isReported: true,
+                    // isReported: true, // Don't hide immediately
                     reportCount: { increment: 1 },
                 },
             });
 
-            // Auto-delete if reported 5+ times
-            if (c.reportCount >= 5) {
-                await prisma.confession.delete({ where: { id: confessionId } });
-            }
+            // Auto-delete if reported 5+ times - DISABLED per user request
+            // if (c.reportCount >= 5) {
+            //     await prisma.confession.delete({ where: { id: confessionId } });
+            // }
 
             // Invalidate cache
             await cacheDel(`confession:${confessionId}`);
@@ -314,6 +314,27 @@ class ConfessionStoreDB {
         });
 
         return confessions.map(c => this.mapConfession(c));
+    }
+
+    async dismissReport(id: string): Promise<boolean> {
+        try {
+            await prisma.confession.update({
+                where: { id },
+                data: {
+                    isReported: false,
+                    reportCount: 0,
+                },
+            });
+
+            // Invalidate cache
+            await cacheDel(`confession:${id}`);
+            await cacheDel('confessions:all');
+            await cacheDel('confessions:trending');
+
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     // ---------------------------------------------------------------------

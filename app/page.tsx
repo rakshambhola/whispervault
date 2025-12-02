@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle, Search, Users, Menu, ArrowUpRight, Lock, Github, Star } from 'lucide-react';
 import GuidelinesModal from '@/components/GuidelinesModal';
+import { Skeleton } from '@/components/ui/skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 
@@ -21,6 +23,7 @@ export default function Home() {
   const [confessions, setConfessions] = useState<Confession[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [isLoading, setIsLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [starCount, setStarCount] = useState<number | null>(null);
@@ -80,13 +83,21 @@ export default function Home() {
 
 
   //this is for search functionality
-  const filteredConfessions = confessions.filter(confession => {
-    if (!confession) return false;
-    const matchesSearch = confession.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (confession.tags && confession.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
-    const matchesTag = selectedTag ? confession.tags && confession.tags.includes(selectedTag) : true;
-    return matchesSearch && matchesTag;
-  });
+  const filteredConfessions = confessions
+    .filter(confession => {
+      if (!confession) return false;
+      const matchesSearch = confession.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (confession.tags && confession.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
+      const matchesTag = selectedTag ? confession.tags && confession.tags.includes(selectedTag) : true;
+      return matchesSearch && matchesTag;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'newest') {
+        return b.timestamp - a.timestamp;
+      } else {
+        return a.timestamp - b.timestamp;
+      }
+    });
 
   const uniqueTags = Array.from(new Set(confessions.flatMap(c => c.tags || [])));
 
@@ -241,128 +252,178 @@ export default function Home() {
           </button>
         </div>
 
-        {activeTab === 'confessions' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Left Sidebar */}
-            <div className="lg:col-span-4 space-y-8">
-              <NewConfession onConfessionCreated={handleNewConfession} />
+        <AnimatePresence mode="wait">
+          {activeTab === 'confessions' ? (
+            <motion.div
+              key="confessions"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-10"
+            >
+              {/* Left Sidebar */}
+              <div className="lg:col-span-4 space-y-8">
+                <NewConfession onConfessionCreated={handleNewConfession} />
 
-              {/* Desktop Stats & Guidelines */}
-              <div className="hidden lg:block space-y-6">
-                <Card className="border-border/40 shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                      Community
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-4 w-4" /> Online
-                      </span>
-                      <span className="font-bold text-green-500 flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        {onlineUsers}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2 text-muted-foreground">
-                        <MessageCircle className="h-4 w-4" /> Total Posts
-                      </span>
-                      <span className="font-bold">{confessions.length}</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Desktop Stats & Guidelines */}
+                <div className="hidden lg:block space-y-6">
+                  <Card className="border-border/40 shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                        Community
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <Users className="h-4 w-4" /> Online
+                        </span>
+                        <span className="font-bold text-green-500 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                          {onlineUsers}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <MessageCircle className="h-4 w-4" /> Total Posts
+                        </span>
+                        <span className="font-bold">{confessions.length}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                <Card className="border-border/40 shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                      Guidelines
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3 text-sm text-muted-foreground">
-                      <li>• Be respectful and kind</li>
-                      <li>• No hate speech or bullying</li>
-                      <li>• Don't share personal info</li>
-                      <li>• Keep it anonymous</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Main Feed */}
-            <div className="lg:col-span-8 space-y-8">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search confessions..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-background/50 border-border/40 h-10"
-                />
+                  <Card className="border-border/40 shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                        Guidelines
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 text-sm text-muted-foreground">
+                        <li>• Be respectful and kind</li>
+                        <li>• No hate speech or bullying</li>
+                        <li>• Don't share personal info</li>
+                        <li>• Keep it anonymous</li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
-              {/* Tag Filter Dropdown */}
-              <div className="flex items-center justify-between mb-6 z-30">
-                <span className="text-sm font-medium text-muted-foreground">Sort by tags</span>
-                <div className="relative inline-block text-left">
-                  <button
-                    onClick={() => document.getElementById('tag-dropdown')?.classList.toggle('hidden')}
-                    className="inline-flex items-center justify-between min-w-[140px] px-4 py-2 text-sm font-medium text-foreground bg-background/50 backdrop-blur-md border border-white/10 rounded-xl shadow-sm hover:bg-secondary/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200"
-                  >
-                    <span>{selectedTag ? `#${selectedTag}` : 'All Tags'}</span>
-                    <svg className="-mr-1 ml-2 h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-
-                  <div
-                    id="tag-dropdown"
-                    className="hidden absolute right-0 mt-2 w-56 origin-top-right bg-background/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in-95 duration-200 z-50"
-                  >
-                    <div className="py-1 max-h-60 overflow-y-auto custom-scrollbar">
-                      <button
-                        onClick={() => {
-                          setSelectedTag('');
-                          document.getElementById('tag-dropdown')?.classList.add('hidden');
-                        }}
-                        className={`block w-full text-left px-4 py-2.5 text-sm ${selectedTag === '' ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
-                      >
-                        All Tags
-                      </button>
-                      {uniqueTags.map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => {
-                            setSelectedTag(tag);
-                            document.getElementById('tag-dropdown')?.classList.add('hidden');
-                          }}
-                          className={`block w-full text-left px-4 py-2.5 text-sm ${selectedTag === tag ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
-                        >
-                          #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {/* Main Feed */}
+              <div className="lg:col-span-8 space-y-8">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search confessions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 bg-background/50 border-border/40 h-10"
+                  />
                 </div>
 
-                {/* Backdrop to close dropdown on click outside */}
-                <div
-                  className="fixed inset-0 z-[-1] hidden"
-                  onClick={(e) => {
-                    const dropdown = document.getElementById('tag-dropdown');
-                    if (dropdown && !dropdown.classList.contains('hidden')) {
-                      dropdown.classList.add('hidden');
-                      e.currentTarget.classList.add('hidden');
-                    }
-                  }}
-                  id="dropdown-backdrop"
-                ></div>
-                <script dangerouslySetInnerHTML={{
-                  __html: `
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6 z-30">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Sort by:</span>
+                    <div className="relative inline-block text-left">
+                      <button
+                        onClick={() => document.getElementById('sort-dropdown')?.classList.toggle('hidden')}
+                        className="inline-flex items-center justify-between min-w-[120px] px-4 py-2 text-sm font-medium text-foreground bg-background/50 backdrop-blur-md border border-white/10 rounded-xl shadow-sm hover:bg-secondary/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200"
+                      >
+                        <span>{sortOrder === 'newest' ? 'Newest' : 'Oldest'}</span>
+                        <svg className="-mr-1 ml-2 h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+
+                      <div
+                        id="sort-dropdown"
+                        className="hidden absolute left-0 mt-2 w-32 origin-top-left bg-background/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in-95 duration-200 z-50"
+                      >
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              setSortOrder('newest');
+                              document.getElementById('sort-dropdown')?.classList.add('hidden');
+                            }}
+                            className={`block w-full text-left px-4 py-2.5 text-sm ${sortOrder === 'newest' ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
+                          >
+                            Newest First
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSortOrder('oldest');
+                              document.getElementById('sort-dropdown')?.classList.add('hidden');
+                            }}
+                            className={`block w-full text-left px-4 py-2.5 text-sm ${sortOrder === 'oldest' ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
+                          >
+                            Oldest First
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filter by tags:</span>
+                    <div className="relative inline-block text-left">
+                      <button
+                        onClick={() => document.getElementById('tag-dropdown')?.classList.toggle('hidden')}
+                        className="inline-flex items-center justify-between min-w-[140px] px-4 py-2 text-sm font-medium text-foreground bg-background/50 backdrop-blur-md border border-white/10 rounded-xl shadow-sm hover:bg-secondary/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200"
+                      >
+                        <span>{selectedTag ? `#${selectedTag}` : 'All Tags'}</span>
+                        <svg className="-mr-1 ml-2 h-5 w-5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+
+                      <div
+                        id="tag-dropdown"
+                        className="hidden absolute right-0 mt-2 w-56 origin-top-right bg-background/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in zoom-in-95 duration-200 z-50"
+                      >
+                        <div className="py-1 max-h-60 overflow-y-auto custom-scrollbar">
+                          <button
+                            onClick={() => {
+                              setSelectedTag('');
+                              document.getElementById('tag-dropdown')?.classList.add('hidden');
+                            }}
+                            className={`block w-full text-left px-4 py-2.5 text-sm ${selectedTag === '' ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
+                          >
+                            All Tags
+                          </button>
+                          {uniqueTags.map((tag) => (
+                            <button
+                              key={tag}
+                              onClick={() => {
+                                setSelectedTag(tag);
+                                document.getElementById('tag-dropdown')?.classList.add('hidden');
+                              }}
+                              className={`block w-full text-left px-4 py-2.5 text-sm ${selectedTag === tag ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-white/5 hover:text-primary transition-colors'}`}
+                            >
+                              #{tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Backdrop to close dropdown on click outside */}
+                    <div
+                      className="fixed inset-0 z-[-1] hidden"
+                      onClick={(e) => {
+                        const dropdown = document.getElementById('tag-dropdown');
+                        if (dropdown && !dropdown.classList.contains('hidden')) {
+                          dropdown.classList.add('hidden');
+                          e.currentTarget.classList.add('hidden');
+                        }
+                      }}
+                      id="dropdown-backdrop"
+                    ></div>
+                    <script dangerouslySetInnerHTML={{
+                      __html: `
                     // Simple click outside handler
                     document.addEventListener('click', function(event) {
                       const dropdown = document.getElementById('tag-dropdown');
@@ -374,39 +435,77 @@ export default function Home() {
                       }
                     });
                   `
-                }} />
-              </div>
+                    }} />
+                  </div>
+                </div>
 
-              {/* List */}
-              {isLoading ? (
-                <div className="text-center py-12 text-muted-foreground">Loading...</div>
-              ) : filteredConfessions.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No confessions found. Be the first to share!
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {filteredConfessions.map((confession) => (
-                    <ConfessionCard
-                      key={confession.id}
-                      confession={confession}
-                      onUpdate={fetchConfessions}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-2xl mx-auto">
-            <Chat />
-          </div>
-        )
-        }
-      </main >
+                {/* List */}
+                {isLoading ? (
+                  <div className="space-y-6">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="border border-border/40 bg-card rounded-xl p-6 space-y-4">
+                        <div className="flex justify-between">
+                          <div className="flex gap-2">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                        <Skeleton className="h-20 w-full" />
+                        <div className="flex justify-between pt-4">
+                          <div className="flex gap-4">
+                            <Skeleton className="h-8 w-20" />
+                            <Skeleton className="h-8 w-12" />
+                          </div>
+                          <Skeleton className="h-8 w-8" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredConfessions.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No confessions found. Be the first to share!
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <AnimatePresence mode="popLayout">
+                      {filteredConfessions.map((confession) => (
+                        <motion.div
+                          key={confession.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.3 }}
+                          layout
+                        >
+                          <ConfessionCard
+                            confession={confession}
+                            onUpdate={fetchConfessions}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="chat"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-2xl mx-auto"
+            >
+              <Chat />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
 
       {/* Footer */}
-      < footer className="border-t border-border/40 py-8 mt-auto bg-background/50" >
+      <footer className="border-t border-border/40 py-8 mt-auto bg-background/50">
         <div className="max-w-5xl mx-auto px-6 text-center text-sm text-muted-foreground">
           <p>
             © {new Date().getFullYear()} Whisper Vault. Created by{' '}
@@ -424,7 +523,7 @@ export default function Home() {
             </a>
           </p>
         </div>
-      </footer >
+      </footer>
     </div >
   );
 }

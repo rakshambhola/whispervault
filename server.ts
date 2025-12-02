@@ -55,6 +55,9 @@ app.prepare().then(() => {
         broadcastOnlineCount();
 
         socket.on('join-chat', (userId: string) => {
+            // Bind userId to this socket session
+            socket.data.userId = userId;
+
             let roomId: string | null = null;
 
             for (const [id, room] of chatRooms.entries()) {
@@ -86,8 +89,11 @@ app.prepare().then(() => {
             broadcastOnlineCount();
         });
 
-        socket.on('send-message', (data: { userId: string; content: string; image?: string }) => {
-            const roomId = userRooms.get(data.userId);
+        socket.on('send-message', (data: { content: string; image?: string }) => {
+            const userId = socket.data.userId;
+            if (!userId) return;
+
+            const roomId = userRooms.get(userId);
             if (!roomId) return;
 
             const room = chatRooms.get(roomId);
@@ -98,7 +104,7 @@ app.prepare().then(() => {
                 content: data.content,
                 image: data.image,
                 timestamp: Date.now(),
-                userId: data.userId,
+                userId: userId,
                 roomId,
             };
 
@@ -106,13 +112,19 @@ app.prepare().then(() => {
             io.to(roomId).emit('new-message', message);
         });
 
-        socket.on('typing', (data: { userId: string; isTyping: boolean }) => {
-            const roomId = userRooms.get(data.userId);
+        socket.on('typing', (data: { isTyping: boolean }) => {
+            const userId = socket.data.userId;
+            if (!userId) return;
+
+            const roomId = userRooms.get(userId);
             if (!roomId) return;
             socket.to(roomId).emit('user-typing', data.isTyping);
         });
 
-        socket.on('leave-chat', (userId: string) => {
+        socket.on('leave-chat', () => {
+            const userId = socket.data.userId;
+            if (!userId) return;
+
             const roomId = userRooms.get(userId);
             if (!roomId) return;
 
@@ -131,16 +143,21 @@ app.prepare().then(() => {
             userRooms.delete(userId);
             socket.leave(roomId);
 
+            // Clear session data
+            socket.data.userId = null;
+
             // Update online count
             broadcastOnlineCount();
         });
 
         socket.on('disconnect', () => {
             console.log('User disconnected:', socket.id);
+            const userId = socket.data.userId;
 
-            // Check if user was in a room
-            let wasInRoom = false;
-            for (const [userId, roomId] of userRooms.entries()) {
+            if (!userId) return;
+
+            const roomId = userRooms.get(userId);
+            if (roomId) {
                 const room = chatRooms.get(roomId);
                 if (room && room.users.includes(userId)) {
                     room.users = room.users.filter(id => id !== userId);
@@ -151,14 +168,8 @@ app.prepare().then(() => {
                         socket.to(roomId).emit('partner-disconnected');
                         socket.to(roomId).emit('user-left', { userCount: room.users.length });
                     }
-
-                    userRooms.delete(userId);
-                    wasInRoom = true;
-                    break;
                 }
-            }
-
-            if (wasInRoom) {
+                userRooms.delete(userId);
                 broadcastOnlineCount();
             }
         });

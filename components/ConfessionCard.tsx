@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import ShareModal from '@/components/ShareModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ConfessionCardProps {
     confession: Confession;
@@ -20,6 +21,8 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
     const [replyContent, setReplyContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
+    const [reportSuccess, setReportSuccess] = useState(false);
+    const [isReported, setIsReported] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [shareReply, setShareReply] = useState<Reply | undefined>(undefined);
     const userId = getUserId();
@@ -164,7 +167,9 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                 }),
             });
             setShowReportModal(false);
-            alert('Report submitted successfully');
+            setReportSuccess(true);
+            setIsReported(true);
+            setTimeout(() => setReportSuccess(false), 3000);
         } catch (error) {
             console.error('Report failed:', error);
         }
@@ -174,6 +179,33 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
         setShareReply(reply);
         setShowShareModal(true);
     };
+
+    if (reportSuccess) {
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="bg-background border border-border p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 text-center space-y-4 animate-in zoom-in-95 duration-300">
+                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <div className="w-8 h-8 text-green-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground">Report Submitted</h3>
+                    <p className="text-muted-foreground">
+                        Thank you for keeping our community safe. We will review this content shortly.
+                    </p>
+                    <p className="text-xs text-muted-foreground/60 pt-2">
+                        This confession has been hidden from your feed.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (isReported) {
+        return null;
+    }
 
     return (
         <>
@@ -214,12 +246,28 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                     className={`h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-green-500/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all duration-300 ${userVote === 'upvote' ? 'text-green-500 hover:text-green-400' : 'text-muted-foreground hover:text-white'
                                         }`}
                                 >
-                                    <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    <motion.div
+                                        whileTap={{ scale: 0.8 }}
+                                        animate={userVote === 'upvote' ? { scale: [1, 1.2, 1] } : {}}
+                                    >
+                                        <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    </motion.div>
                                 </Button>
-                                <span className={`text-xs sm:text-sm font-bold px-1.5 sm:px-2 min-w-[1.25rem] sm:min-w-[1.5rem] text-center ${voteScore > 0 ? 'text-green-500' : voteScore < 0 ? 'text-red-500' : 'text-muted-foreground'
-                                    }`}>
-                                    {voteScore}
-                                </span>
+                                <div className="min-w-[1.25rem] sm:min-w-[1.5rem] flex justify-center overflow-hidden">
+                                    <AnimatePresence mode="popLayout" initial={false}>
+                                        <motion.span
+                                            key={voteScore}
+                                            initial={{ y: 10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            exit={{ y: -10, opacity: 0 }}
+                                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                            className={`text-xs sm:text-sm font-bold px-1.5 sm:px-2 text-center ${voteScore > 0 ? 'text-green-500' : voteScore < 0 ? 'text-red-500' : 'text-muted-foreground'
+                                                }`}
+                                        >
+                                            {voteScore}
+                                        </motion.span>
+                                    </AnimatePresence>
+                                </div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -227,7 +275,12 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                     className={`h-7 w-7 sm:h-8 sm:w-8 rounded-md hover:bg-red-500/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 ${userVote === 'downvote' ? 'text-red-500 hover:text-red-400' : 'text-muted-foreground hover:text-white'
                                         }`}
                                 >
-                                    <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    <motion.div
+                                        whileTap={{ scale: 0.8 }}
+                                        animate={userVote === 'downvote' ? { scale: [1, 1.2, 1] } : {}}
+                                    >
+                                        <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    </motion.div>
                                 </Button>
                             </div>
 
@@ -270,6 +323,24 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                     </div>
                                 </div>
                             )}
+
+                            {/* Report Success Notification */}
+                            <AnimatePresence>
+                                {reportSuccess && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                                        className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-xl shadow-2xl z-50 flex items-center gap-3"
+                                    >
+                                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                                        <p className="text-xs font-medium text-green-400">
+                                            Thanks for reporting. We'll look into it.
+                                        </p>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
                             <Button
                                 variant="ghost"
                                 size="icon"
