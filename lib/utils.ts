@@ -143,9 +143,10 @@ export const syncVotesFromServer = async (): Promise<void> => {
         const data = await response.json();
 
         if (data.votes) {
-            // Merge server votes with local votes
+            // Server votes (IP-based) should override local votes for cross-browser persistence
+            // This ensures that votes persist across different browsers on the same system
             const localVotes = JSON.parse(localStorage.getItem('userVotes') || '{}');
-            const mergedVotes = { ...data.votes, ...localVotes };
+            const mergedVotes = { ...localVotes, ...data.votes };
             localStorage.setItem('userVotes', JSON.stringify(mergedVotes));
 
             // Store the IP for future use

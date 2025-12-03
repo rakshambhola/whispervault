@@ -27,6 +27,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [starCount, setStarCount] = useState<number | null>(null);
+  const [votesSynced, setVotesSynced] = useState(false);
 
   const fetchConfessions = async (isBackground = false) => {
     if (!isBackground) setIsLoading(true);
@@ -53,6 +54,7 @@ export default function Home() {
     import('@/lib/utils').then(({ syncVotesFromServer }) => {
       syncVotesFromServer().then(() => {
         // After syncing votes, fetch confessions
+        setVotesSynced(true);
         fetchConfessions();
       });
     });
@@ -499,6 +501,7 @@ export default function Home() {
                           layout
                         >
                           <ConfessionCard
+                            key={`${confession.id}-${votesSynced}`}
                             confession={confession}
                             onUpdate={fetchConfessions}
                           />
