@@ -111,14 +111,23 @@ export const removeUserVote = (targetId: string, userId: string): void => {
     localStorage.setItem('userVotes', JSON.stringify(votes));
 };
 
-// Get or create user ID
+// Get or create user ID (uses IP from server for cross-browser persistence)
 export const getUserId = (): string => {
     if (typeof window === 'undefined') return 'server-user';
-    let userId = localStorage.getItem('userId');
+
+    // Use IP from server if available (set during vote sync)
+    // This ensures vote keys match between client and server
+    let userId = localStorage.getItem('userIP');
+
+    // Fallback to random ID if IP not yet available
     if (!userId) {
-        userId = generateId();
-        localStorage.setItem('userId', userId);
+        userId = localStorage.getItem('userId');
+        if (!userId) {
+            userId = generateId();
+            localStorage.setItem('userId', userId);
+        }
     }
+
     return userId;
 };
 
