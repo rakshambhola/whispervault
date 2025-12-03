@@ -33,6 +33,8 @@ class ConfessionStoreDB {
             confessionId: r.confessionId,
             content: r.content,
             timestamp: r.timestamp instanceof Date ? r.timestamp.getTime() : new Date(r.timestamp).getTime(),
+            isReported: r.isReported,
+            reportCount: r.reportCount,
         };
     }
 
@@ -223,6 +225,26 @@ class ConfessionStoreDB {
         }
     }
 
+    async reportReply(replyId: string): Promise<boolean> {
+        try {
+            const r = await prisma.reply.update({
+                where: { id: replyId },
+                data: {
+                    reportCount: { increment: 1 },
+                    isReported: true,
+                },
+            });
+
+            // Invalidate cache
+            await cacheDel(`confession:${r.confessionId}`);
+            await cacheDel('confessions:all');
+
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     async getTrendingConfessions(limit: number = 10): Promise<Confession[]> {
         // Try cache first
         const cacheKey = `confessions:trending:${limit}`;
@@ -307,6 +329,16 @@ class ConfessionStoreDB {
                 OR: [
                     { isReported: true },
                     { reportCount: { gt: 0 } },
+                    {
+                        replies: {
+                            some: {
+                                OR: [
+                                    { isReported: true },
+                                    { reportCount: { gt: 0 } }
+                                ]
+                            }
+                        }
+                    }
                 ],
             },
             orderBy: { reportCount: 'desc' },

@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
 
         if (targetType === 'confession') {
             success = await confessionStore.reportConfession(targetId);
+        } else if (targetType === 'reply') {
+            success = await confessionStore.reportReply(targetId);
         }
 
         if (!success) {

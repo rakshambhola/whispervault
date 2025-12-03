@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Confession, Reply } from '@/types';
 import { formatTimestamp, calculateVoteScore, getUserId, hasUserVoted, saveUserVote, removeUserVote } from '@/lib/utils';
-import { ArrowUp, ArrowDown, MessageCircle, Flag, Send, Share2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, MessageCircle, Flag, Send, Share2, MoreVertical } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
     const [isReported, setIsReported] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [shareReply, setShareReply] = useState<Reply | undefined>(undefined);
+    const [reportTarget, setReportTarget] = useState<{ type: 'confession' | 'reply', id: string } | null>(null);
     const userId = getUserId();
 
     // Optimistic UI state
@@ -156,23 +157,38 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
     };
 
     const handleReport = async (reason: string) => {
+        if (!reportTarget) return;
+
         try {
             await fetch('/api/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    targetId: confession.id,
-                    targetType: 'confession',
+                    targetId: reportTarget.id,
+                    targetType: reportTarget.type,
                     reason,
                 }),
             });
             setShowReportModal(false);
             setReportSuccess(true);
-            setIsReported(true);
+
+            if (reportTarget.type === 'confession') {
+                setIsReported(true);
+            } else {
+                // Hide the reported reply locally
+                setLocalReplies(prev => prev.filter(r => r.id !== reportTarget.id));
+            }
+
             setTimeout(() => setReportSuccess(false), 3000);
+            setReportTarget(null);
         } catch (error) {
             console.error('Report failed:', error);
         }
+    };
+
+    const handleReportClick = (type: 'confession' | 'reply', id: string) => {
+        setReportTarget({ type, id });
+        setShowReportModal(true);
     };
 
     const handleShare = (reply?: Reply) => {
@@ -344,8 +360,8 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setShowReportModal(!showReportModal)}
-                                className={`h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-300 ${showReportModal ? 'text-white bg-destructive/20 backdrop-blur-xl shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}
+                                onClick={() => handleReportClick('confession', confession.id)}
+                                className={`h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-300 ${showReportModal && reportTarget?.type === 'confession' ? 'text-white bg-destructive/20 backdrop-blur-xl shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}
                             >
                                 <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </Button>
@@ -388,14 +404,25 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground/80">
                                                     <span>{formatTimestamp(reply.timestamp)}</span>
                                                 </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleShare(reply)}
-                                                    className="h-6 w-6 text-muted-foreground hover:text-white hover:bg-primary/20 hover:backdrop-blur-xl hover:shadow-[0_0_10px_rgba(236,72,153,0.2)] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300"
-                                                >
-                                                    <Share2 className="h-3 w-3" />
-                                                </Button>
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleShare(reply)}
+                                                        className="h-6 w-6 text-muted-foreground hover:text-white hover:bg-primary/20 hover:backdrop-blur-xl hover:shadow-[0_0_10px_rgba(236,72,153,0.2)] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                    >
+                                                        <Share2 className="h-3 w-3" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => handleReportClick('reply', reply.id)}
+                                                        className="h-6 w-6 text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_10px_rgba(239,68,68,0.2)] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                        title="Report Reply"
+                                                    >
+                                                        <Flag className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

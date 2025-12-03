@@ -16,6 +16,8 @@ export interface Reply {
     confessionId: string;
     content: string;
     timestamp: number;
+    isReported?: boolean;
+    reportCount?: number;
 }
 
 export interface ChatMessage {
