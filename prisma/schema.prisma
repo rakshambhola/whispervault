@@ -40,3 +40,9 @@ model Reply {
   confessionId String
   confession   Confession @relation(fields: [confessionId], references: [id], onDelete: Cascade)
 }
+
+model Admin {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+}

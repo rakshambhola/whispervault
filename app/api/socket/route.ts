@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as NetServer } from 'http';
 import { ChatMessage, ChatRoom } from '@/types';
-import { generateId } from '@/lib/utils';
+import { generateId, validateContent } from '@/lib/utils';
 
 // In-memory storage
 const chatRooms = new Map<string, ChatRoom>();
@@ -141,6 +141,13 @@ export async function GET(req: NextRequest) {
 
                 const room = chatRooms.get(roomId);
                 if (!room) return;
+
+                // Validate content
+                const validation = validateContent(data.content, 1000);
+                if (!validation.valid) {
+                    socket.emit('error', { message: validation.error });
+                    return;
+                }
 
                 const message: ChatMessage = {
                     id: generateId(),

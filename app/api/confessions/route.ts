@@ -64,6 +64,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: validation.error }, { status: 400 });
         }
 
+        // Validate tags
+        if (tags && Array.isArray(tags)) {
+            if (tags.length > 5) {
+                return NextResponse.json({ error: 'Too many tags (max 5)' }, { status: 400 });
+            }
+            for (const tag of tags) {
+                if (typeof tag === 'string' && tag.length > 20) {
+                    return NextResponse.json({ error: 'Tags must be 20 characters or less' }, { status: 400 });
+                }
+            }
+        }
+
         const confession = await confessionStore.createConfession(content, tags, ip);
         return NextResponse.json({ confession }, { status: 201 });
     } catch (error) {

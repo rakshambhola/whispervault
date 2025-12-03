@@ -38,6 +38,34 @@ export default function AdminPage() {
     const [ipToBlock, setIpToBlock] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsChangingPassword(true);
+        try {
+            const res = await fetch('/api/admin/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('Password updated successfully');
+                setCurrentPassword('');
+                setNewPassword('');
+            } else {
+                alert(data.error || 'Failed to update password');
+            }
+        } catch (error) {
+            console.error('Failed to update password', error);
+            alert('An error occurred');
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
 
     // Fetch admin data
     const fetchData = async () => {
@@ -507,6 +535,40 @@ export default function AdminPage() {
                                     <p className="text-xs text-muted-foreground mt-3">
                                         Blocking an IP will prevent them from posting new confessions or reporting existing ones.
                                     </p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="bg-card/40 backdrop-blur-md border-white/10 h-fit">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-lg">
+                                        <Lock className="h-5 w-5 text-primary" />
+                                        Change Admin Password
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <form onSubmit={handleChangePassword} className="space-y-4">
+                                        <Input
+                                            type="password"
+                                            placeholder="Current Password"
+                                            value={currentPassword}
+                                            onChange={e => setCurrentPassword(e.target.value)}
+                                            className="bg-background/50 border-white/10 focus:ring-primary/20"
+                                        />
+                                        <Input
+                                            type="password"
+                                            placeholder="New Password"
+                                            value={newPassword}
+                                            onChange={e => setNewPassword(e.target.value)}
+                                            className="bg-background/50 border-white/10 focus:ring-primary/20"
+                                        />
+                                        <Button
+                                            type="submit"
+                                            disabled={!currentPassword || !newPassword || isChangingPassword}
+                                            className="w-full"
+                                        >
+                                            {isChangingPassword ? 'Updating...' : 'Update Password'}
+                                        </Button>
+                                    </form>
                                 </CardContent>
                             </Card>
 

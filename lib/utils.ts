@@ -47,13 +47,13 @@ export const calculateVoteScore = (upvotes: number, downvotes: number): number =
 };
 
 // Validate content
-export const validateContent = (content: string): { valid: boolean; error?: string } => {
+export const validateContent = (content: string, maxLength: number = 500): { valid: boolean; error?: string } => {
     if (!content || content.trim().length === 0) {
         return { valid: false, error: 'Content cannot be empty' };
     }
 
-    if (content.length > 500) {
-        return { valid: false, error: 'Content must be less than 500 characters' };
+    if (content.length > maxLength) {
+        return { valid: false, error: `Content must be less than ${maxLength} characters` };
     }
 
     // Basic profanity check (can be enhanced)

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { confessionStoreDB as confessionStore } from '@/lib/confessionStoreDB';
 
+import { validateContent } from '@/lib/utils';
+
 // Force Node.js runtime (required for Mongoose)
 export const runtime = 'nodejs';
 
@@ -15,6 +17,11 @@ export async function POST(request: NextRequest) {
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
+        }
+
+        const validation = validateContent(content, 300); // Limit replies to 300 chars
+        if (!validation.valid) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
         }
 
         const reply = await confessionStore.addReply(confessionId, content);

@@ -423,6 +423,7 @@ export default function Chat() {
                         placeholder="Type a message..."
                         className="flex-1 bg-background border-input"
                         disabled={!isConnected || userCount !== 2 || isPartnerDisconnected}
+                        maxLength={1000}
                     />
                     <Button
                         onClick={handleSendMessage}
