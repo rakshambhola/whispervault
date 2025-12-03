@@ -1,5 +1,5 @@
 # 🎭 WhisperVault - Anonymous Campus Confession & Chat App
-
+---
 A viral-worthy anonymous confession and chat platform built for college campuses. Share confessions, upvote/downvote, reply to posts, and chat with random strangers - all completely anonymous!
 
 ![WhisperVault](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![Socket.io](https://img.shields.io/badge/Socket.io-4.8-green) ![Tailwind](https://img.shields.io/badge/Tailwind-4-cyan)
