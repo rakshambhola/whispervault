@@ -181,77 +181,76 @@ io.on('connection', (socket) => {
         // No partner found, add to waiting queue
         waitingQueue.push({ userId, socketId: socket.id });
     }
-});
 
-socket.on('send-message', (data) => {
-    const userId = socketUsers.get(socket.id);
-    if (!userId) return;
+    socket.on('send-message', (data) => {
+        const userId = socketUsers.get(socket.id);
+        if (!userId) return;
 
-    const roomId = userRooms.get(userId);
-    if (!roomId) return;
+        const roomId = userRooms.get(userId);
+        if (!roomId) return;
 
-    const room = chatRooms.get(roomId);
-    if (!room) return;
+        const room = chatRooms.get(roomId);
+        if (!room) return;
 
-    const message = {
-        id: generateId(),
-        content: data.content,
-        image: data.image,
-        timestamp: Date.now(),
-        userId: userId,
-        roomId,
+        const message = {
+            id: generateId(),
+            content: data.content,
+            image: data.image,
+            timestamp: Date.now(),
+            userId: userId,
+            roomId,
+        };
+
+        room.messages.push(message);
+        io.to(roomId).emit('new-message', message);
+    });
+
+    socket.on('typing', (data) => {
+        const userId = socketUsers.get(socket.id);
+        if (!userId) return;
+
+        const roomId = userRooms.get(userId);
+        if (!roomId) return;
+        socket.to(roomId).emit('user-typing', data.isTyping);
+    });
+
+    const handleCleanup = (userId) => {
+        // Remove from queue if present
+        waitingQueue = waitingQueue.filter(u => u.userId !== userId);
+
+        const roomId = userRooms.get(userId);
+        if (!roomId) return;
+
+        const room = chatRooms.get(roomId);
+        if (room) {
+            room.users = room.users.filter(id => id !== userId);
+
+            if (room.users.length === 0) {
+                chatRooms.delete(roomId);
+            } else {
+                socket.to(roomId).emit('user-left', { userCount: room.users.length });
+                socket.to(roomId).emit('partner-disconnected');
+            }
+        }
+
+        userRooms.delete(userId);
+        socket.leave(roomId);
     };
 
-    room.messages.push(message);
-    io.to(roomId).emit('new-message', message);
-});
-
-socket.on('typing', (data) => {
-    const userId = socketUsers.get(socket.id);
-    if (!userId) return;
-
-    const roomId = userRooms.get(userId);
-    if (!roomId) return;
-    socket.to(roomId).emit('user-typing', data.isTyping);
-});
-
-const handleCleanup = (userId) => {
-    // Remove from queue if present
-    waitingQueue = waitingQueue.filter(u => u.userId !== userId);
-
-    const roomId = userRooms.get(userId);
-    if (!roomId) return;
-
-    const room = chatRooms.get(roomId);
-    if (room) {
-        room.users = room.users.filter(id => id !== userId);
-
-        if (room.users.length === 0) {
-            chatRooms.delete(roomId);
-        } else {
-            socket.to(roomId).emit('user-left', { userCount: room.users.length });
-            socket.to(roomId).emit('partner-disconnected');
-        }
-    }
-
-    userRooms.delete(userId);
-    socket.leave(roomId);
-};
-
-socket.on('leave-chat', (userId) => {
-    handleCleanup(userId);
-    socketUsers.delete(socket.id);
-});
-
-socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    const userId = socketUsers.get(socket.id);
-    if (userId) {
+    socket.on('leave-chat', (userId) => {
         handleCleanup(userId);
         socketUsers.delete(socket.id);
-    }
-    broadcastUserCount();
-});
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+        const userId = socketUsers.get(socket.id);
+        if (userId) {
+            handleCleanup(userId);
+            socketUsers.delete(socket.id);
+        }
+        broadcastUserCount();
+    });
 });
 
 // Health check endpoint
