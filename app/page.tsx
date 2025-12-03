@@ -49,7 +49,14 @@ export default function Home() {
   }, [activeTab]);
 
   useEffect(() => {
-    fetchConfessions();
+    // Sync votes from server first (IP-based, works across browsers & incognito)
+    import('@/lib/utils').then(({ syncVotesFromServer }) => {
+      syncVotesFromServer().then(() => {
+        // After syncing votes, fetch confessions
+        fetchConfessions();
+      });
+    });
+
 
     // Fetch GitHub Stars
     fetch('https://api.github.com/repos/vivekisadev/whispervault')

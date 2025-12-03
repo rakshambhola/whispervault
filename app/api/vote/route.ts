@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { confessionStoreDB as confessionStore } from '@/lib/confessionStoreDB';
+import { getUserIP } from '@/lib/ip';
+import { prisma } from '@/lib/db/prisma';
 
 // Force Node.js runtime (required for Mongoose)
 export const runtime = 'nodejs';
@@ -17,21 +19,69 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Get user's IP for tracking
+        const ip = await getUserIP();
+
         let success = false;
 
         if (action === 'remove') {
-            // Remove vote
+            // Remove vote from database
+            await prisma.vote.deleteMany({
+                where: {
+                    ip,
+                    targetId,
+                    targetType,
+                },
+            });
+
+            // Remove vote from confession/reply counts
             if (targetType === 'confession') {
                 success = await confessionStore.removeVoteConfession(targetId, voteType);
             }
         } else {
-            // Add vote
+            // Check if user already voted differently
+            const existingVote = await prisma.vote.findUnique({
+                where: {
+                    ip_targetId_targetType: {
+                        ip,
+                        targetId,
+                        targetType,
+                    },
+                },
+            });
+
+            // If switching vote type, remove old vote first
+            if (existingVote && existingVote.voteType !== voteType) {
+                await confessionStore.removeVoteConfession(targetId, existingVote.voteType as 'upvote' | 'downvote');
+            }
+
+            // Upsert the vote (create or update)
+            await prisma.vote.upsert({
+                where: {
+                    ip_targetId_targetType: {
+                        ip,
+                        targetId,
+                        targetType,
+                    },
+                },
+                update: {
+                    voteType,
+                },
+                create: {
+                    ip,
+                    targetId,
+                    targetType,
+                    voteType,
+                },
+            });
+
+            // Add vote to confession/reply counts
             if (targetType === 'confession') {
                 success = await confessionStore.voteConfession(targetId, voteType);
             }
         }
 
-        if (!success) {
+        if (!success && targetType === 'confession') {
             return NextResponse.json(
                 { error: 'Vote failed' },
                 { status: 404 }

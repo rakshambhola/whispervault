@@ -46,3 +46,17 @@ model Admin {
   username String @unique
   password String
 }
+
+model Vote {
+  id           String   @id @default(cuid())
+  ip           String
+  targetId     String   // confession or reply ID
+  targetType   String   // 'confession' or 'reply'
+  voteType     String   // 'upvote' or 'downvote'
+  createdAt    DateTime @default(now())
+  
+  @@unique([ip, targetId, targetType])
+  @@index([ip])
+  @@index([targetId])
+}
+

@@ -1,9 +1,7 @@
-'use client';
-
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { ChatMessage } from '@/types';
-import { getUserId, getAnonymousName, formatTimestamp } from '@/lib/utils';
+import { generateId, generateAnonymousName, formatTimestamp } from '@/lib/utils';
 import { Send, UserX, Loader, Image as ImageIcon, X, Smile } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,8 +20,10 @@ export default function Chat() {
     const [userCount, setUserCount] = useState(0);
     const [roomId, setRoomId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const userId = getUserId();
-    const anonymousName = getAnonymousName();
+
+    // Generate NEW identity for each chat session (never persist)
+    const [chatUserId] = useState(() => generateId());
+    const [chatName] = useState(() => generateAnonymousName());
 
     const [isPartnerDisconnected, setIsPartnerDisconnected] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export default function Chat() {
         newSocket.on('connect', () => {
             console.log('Connected to chat');
             // Don't set isConnected here yet, wait for identity
-            newSocket.emit('join-chat', userId);
+            newSocket.emit('join-chat', chatUserId);
         });
 
         newSocket.on('your-userid', (id: string) => {
@@ -140,19 +140,19 @@ export default function Chat() {
         socket.emit('send-message', {
             content: inputMessage,
             image: selectedImage,
-            userId
+            chatUserId
         });
 
         setInputMessage('');
         setSelectedImage(null);
-        socket.emit('typing', { isTyping: false, userId });
+        socket.emit('typing', { isTyping: false, userId: chatUserId });
     };
 
     const handleTyping = (value: string) => {
         setInputMessage(value);
 
         if (socket && isConnected) {
-            socket.emit('typing', { isTyping: value.length > 0, userId });
+            socket.emit('typing', { isTyping: value.length > 0, userId: chatUserId });
         }
     };
 
@@ -168,7 +168,7 @@ export default function Chat() {
 
             // Wait a bit before re-joining to ensure server processes the leave
             setTimeout(() => {
-                socket.emit('join-chat', userId);
+                socket.emit('join-chat', chatUserId);
             }, 300);
         }
     };
@@ -435,7 +435,7 @@ export default function Chat() {
                     </Button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                    You are chatting as <span className="text-primary font-medium">{anonymousName}</span>
+                    You are chatting as <span className="text-primary font-medium">{chatName}</span>
                 </p>
             </CardContent>
         </Card>

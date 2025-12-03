@@ -132,3 +132,28 @@ export const getAnonymousName = (): string => {
     }
     return name;
 };
+
+// Sync votes from server (IP-based) to localStorage
+// This enables cross-browser persistence
+export const syncVotesFromServer = async (): Promise<void> => {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const response = await fetch('/api/user/votes');
+        const data = await response.json();
+
+        if (data.votes) {
+            // Merge server votes with local votes
+            const localVotes = JSON.parse(localStorage.getItem('userVotes') || '{}');
+            const mergedVotes = { ...data.votes, ...localVotes };
+            localStorage.setItem('userVotes', JSON.stringify(mergedVotes));
+
+            // Store the IP for future use
+            if (data.ip) {
+                localStorage.setItem('userIP', data.ip);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to sync votes from server:', error);
+    }
+};
