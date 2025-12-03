@@ -8,6 +8,7 @@ export type SocketServer = SocketIOServer;
 // In-memory storage (replace with Redis in production)
 const chatRooms = new Map<string, ChatRoom>();
 const userRooms = new Map<string, string>(); // userId -> roomId
+const socketUsers = new Map<string, string>(); // socketId -> userId
 
 export const initializeSocket = (server: NetServer): SocketIOServer => {
     const io = new SocketIOServer(server, {
@@ -22,6 +23,7 @@ export const initializeSocket = (server: NetServer): SocketIOServer => {
 
         // Join random chat room
         socket.on('join-chat', (userId: string) => {
+            socketUsers.set(socket.id, userId);
             // Find available room or create new one
             let roomId: string | null = null;
 
@@ -54,8 +56,11 @@ export const initializeSocket = (server: NetServer): SocketIOServer => {
         });
 
         // Send message
-        socket.on('send-message', (data: { userId: string; content: string }) => {
-            const roomId = userRooms.get(data.userId);
+        socket.on('send-message', (data: { content: string }) => {
+            const userId = socketUsers.get(socket.id);
+            if (!userId) return;
+
+            const roomId = userRooms.get(userId);
             if (!roomId) return;
 
             const room = chatRooms.get(roomId);
@@ -65,7 +70,7 @@ export const initializeSocket = (server: NetServer): SocketIOServer => {
                 id: generateId(),
                 content: data.content,
                 timestamp: Date.now(),
-                userId: data.userId,
+                userId: userId,
                 roomId,
             };
 
@@ -74,8 +79,11 @@ export const initializeSocket = (server: NetServer): SocketIOServer => {
         });
 
         // User is typing
-        socket.on('typing', (data: { userId: string; isTyping: boolean }) => {
-            const roomId = userRooms.get(data.userId);
+        socket.on('typing', (data: { isTyping: boolean }) => {
+            const userId = socketUsers.get(socket.id);
+            if (!userId) return;
+
+            const roomId = userRooms.get(userId);
             if (!roomId) return;
 
             socket.to(roomId).emit('user-typing', data.isTyping);
@@ -111,6 +119,11 @@ export const initializeSocket = (server: NetServer): SocketIOServer => {
         // Disconnect
         socket.on('disconnect', () => {
             console.log('User disconnected:', socket.id);
+
+            const userId = socketUsers.get(socket.id);
+            if (userId) {
+                socketUsers.delete(socket.id);
+            }
 
             // Find and remove user from their room
             for (const [userId, roomId] of userRooms.entries()) {

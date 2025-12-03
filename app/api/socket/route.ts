@@ -132,8 +132,11 @@ export async function GET(req: NextRequest) {
                 }
             });
 
-            socket.on('send-message', (data: { userId: string; content: string; image?: string }) => {
-                const roomId = userRooms.get(data.userId);
+            socket.on('send-message', (data: { content: string; image?: string }) => {
+                const userId = socketUsers.get(socket.id);
+                if (!userId) return;
+
+                const roomId = userRooms.get(userId);
                 if (!roomId) return;
 
                 const room = chatRooms.get(roomId);
@@ -144,7 +147,7 @@ export async function GET(req: NextRequest) {
                     content: data.content,
                     image: data.image,
                     timestamp: Date.now(),
-                    userId: data.userId,
+                    userId: userId,
                     roomId,
                 };
 
@@ -152,8 +155,11 @@ export async function GET(req: NextRequest) {
                 io.to(roomId).emit('new-message', message);
             });
 
-            socket.on('typing', (data: { userId: string; isTyping: boolean }) => {
-                const roomId = userRooms.get(data.userId);
+            socket.on('typing', (data: { isTyping: boolean }) => {
+                const userId = socketUsers.get(socket.id);
+                if (!userId) return;
+
+                const roomId = userRooms.get(userId);
                 if (!roomId) return;
                 socket.to(roomId).emit('user-typing', data.isTyping);
             });

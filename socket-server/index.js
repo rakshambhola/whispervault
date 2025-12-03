@@ -16,6 +16,7 @@ app.use(cors({
 }));
 
 const io = new Server(httpServer, {
+    path: '/api/socket',
     maxHttpBufferSize: 1e8, // 100 MB
     cors: {
         origin: process.env.FRONTEND_URL || '*',
@@ -164,7 +165,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send-message', (data) => {
-        const roomId = userRooms.get(data.userId);
+        const userId = socketUsers.get(socket.id);
+        if (!userId) return;
+
+        const roomId = userRooms.get(userId);
         if (!roomId) return;
 
         const room = chatRooms.get(roomId);
@@ -175,7 +179,7 @@ io.on('connection', (socket) => {
             content: data.content,
             image: data.image,
             timestamp: Date.now(),
-            userId: data.userId,
+            userId: userId,
             roomId,
         };
 
@@ -184,7 +188,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('typing', (data) => {
-        const roomId = userRooms.get(data.userId);
+        const userId = socketUsers.get(socket.id);
+        if (!userId) return;
+
+        const roomId = userRooms.get(userId);
         if (!roomId) return;
         socket.to(roomId).emit('user-typing', data.isTyping);
     });

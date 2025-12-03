@@ -49,7 +49,7 @@ export default function Chat() {
         newSocket.on('connect', () => {
             console.log('Connected to chat');
             // Don't set isConnected here yet, wait for identity
-            newSocket.emit('join-chat');
+            newSocket.emit('join-chat', userId);
         });
 
         newSocket.on('your-userid', (id: string) => {
@@ -139,19 +139,20 @@ export default function Chat() {
 
         socket.emit('send-message', {
             content: inputMessage,
-            image: selectedImage
+            image: selectedImage,
+            userId
         });
 
         setInputMessage('');
         setSelectedImage(null);
-        socket.emit('typing', { isTyping: false });
+        socket.emit('typing', { isTyping: false, userId });
     };
 
     const handleTyping = (value: string) => {
         setInputMessage(value);
 
         if (socket && isConnected) {
-            socket.emit('typing', { isTyping: value.length > 0 });
+            socket.emit('typing', { isTyping: value.length > 0, userId });
         }
     };
 
@@ -167,7 +168,7 @@ export default function Chat() {
 
             // Wait a bit before re-joining to ensure server processes the leave
             setTimeout(() => {
-                socket.emit('join-chat');
+                socket.emit('join-chat', userId);
             }, 300);
         }
     };
