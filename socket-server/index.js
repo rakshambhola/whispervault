@@ -52,6 +52,9 @@ io.on('connection', (socket) => {
         // Store socket-user mapping
         socketUsers.set(socket.id, userId);
 
+        // Confirm identity to client
+        socket.emit('your-userid', userId);
+
         // Check if user is already in a room or queue, remove them if so to prevent duplicates
         if (waitingQueue.some(u => u.userId === userId)) {
             waitingQueue = waitingQueue.filter(u => u.userId !== userId);
