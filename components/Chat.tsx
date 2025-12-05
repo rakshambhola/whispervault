@@ -193,6 +193,10 @@ export default function Chat() {
             };
 
             mediaRecorder.onstop = () => {
+                // Stop all tracks now that recording is done
+                stream.getTracks().forEach(track => track.stop());
+                setRecordingStream(null);
+
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 if (audioBlob.size === 0) {
                     console.warn("Audio recording was empty");
@@ -233,8 +237,7 @@ export default function Chat() {
     const stopRecordingAndSend = () => {
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            setRecordingStream(null);
+            // Tracks will be stopped in onstop handler to ensure recording finishes
             setIsRecording(false);
             if (timerRef.current) clearInterval(timerRef.current);
         }
@@ -441,7 +444,7 @@ export default function Chat() {
                                                 <span className="opacity-80 line-clamp-1 italic">{message.replyTo.content}</span>
                                             </div>
                                         )}
-                                        <div className="relative z-10">
+                                        <div className="relative z-10 min-w-[120px]">
                                             {message.image && (
                                                 <div
                                                     className="relative mb-2 rounded-lg overflow-hidden group cursor-zoom-in"
@@ -460,15 +463,32 @@ export default function Chat() {
                                                     />
                                                 </div>
                                             )}
-                                            {message.content && <p className="text-sm mb-1">{message.content}</p>}
+
                                             {message.audio && (
                                                 <div className="mt-1 mb-1">
                                                     <AudioPlayer src={message.audio} />
                                                 </div>
                                             )}
-                                            <p className="text-[10px] opacity-70 text-right mt-1">
-                                                {formatChatTimestamp(message.timestamp)}
-                                            </p>
+
+                                            {message.content && (
+                                                <div className="flex flex-wrap items-end gap-x-2">
+                                                    <p className="text-sm break-words leading-relaxed max-w-full">
+                                                        {message.content}
+                                                    </p>
+                                                    <span className="text-[10px] opacity-70 ml-auto pb-0.5 select-none shrink-0">
+                                                        {formatChatTimestamp(message.timestamp)}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            {/* Timestamp for media-only messages */}
+                                            {!message.content && (
+                                                <div className="flex justify-end mt-1">
+                                                    <span className="text-[10px] opacity-70 select-none">
+                                                        {formatChatTimestamp(message.timestamp)}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </SwipeableMessage>
