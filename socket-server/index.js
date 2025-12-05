@@ -37,8 +37,11 @@ function generateId() {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
+console.log('🚀 Socket.IO server initialized');
+console.log('📡 Listening for connections with maxHttpBufferSize: 100 MB');
+
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+    console.log('✅ User connected:', socket.id);
 
     // Broadcast online user count
     const broadcastUserCount = () => {
@@ -160,6 +163,14 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send-message', (data) => {
+        console.log("📨 Received message:", {
+            hasContent: !!data.content,
+            hasImage: !!data.image,
+            hasAudio: !!data.audio,
+            audioLength: data.audio?.length,
+            hasReply: !!data.replyTo
+        });
+
         const userId = socketUsers.get(socket.id);
         if (!userId) return;
 
@@ -173,13 +184,22 @@ io.on('connection', (socket) => {
             id: generateId(),
             content: data.content,
             image: data.image,
+            audio: data.audio,
+            replyTo: data.replyTo,
             timestamp: Date.now(),
             userId: userId,
             roomId,
         };
 
+        console.log("💾 Storing message:", {
+            id: message.id,
+            hasAudio: !!message.audio,
+            audioLength: message.audio?.length
+        });
+
         room.messages.push(message);
         io.to(roomId).emit('new-message', message);
+        console.log("✅ Broadcast message to room");
     });
 
     socket.on('typing', (data) => {
