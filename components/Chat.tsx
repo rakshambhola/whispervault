@@ -46,6 +46,7 @@ export default function Chat() {
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
+    const [isProcessingAudio, setIsProcessingAudio] = useState(false);
 
     useEffect(() => {
         // Connect to external Socket.IO server (deployed separately)
@@ -91,6 +92,14 @@ export default function Chat() {
         });
 
         newSocket.on('new-message', (message: ChatMessage) => {
+            console.log("📬 Received new message:", {
+                id: message.id,
+                hasContent: !!message.content,
+                hasImage: !!message.image,
+                hasAudio: !!message.audio,
+                audioLength: message.audio?.length,
+                userId: message.userId
+            });
             setMessages((prev) => [...prev, message]);
         });
 
@@ -194,21 +203,31 @@ export default function Chat() {
             };
 
             mediaRecorder.onstop = () => {
+                console.log("🎤 Recording stopped, processing audio...");
+                setIsProcessingAudio(true);
+
                 // Stop all tracks now that recording is done
                 stream.getTracks().forEach(track => track.stop());
                 setRecordingStream(null);
 
+                console.log("📊 Audio chunks collected:", audioChunksRef.current.length);
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                console.log("📦 Audio blob created, size:", audioBlob.size, "bytes");
+
                 if (audioBlob.size === 0) {
-                    console.warn("Audio recording was empty");
+                    console.warn("⚠️ Audio recording was empty");
+                    setIsProcessingAudio(false);
                     return;
                 }
+
                 const reader = new FileReader();
-                reader.readAsDataURL(audioBlob);
                 reader.onloadend = () => {
                     const base64Audio = reader.result as string;
+                    console.log("✅ Base64 audio created, length:", base64Audio.length);
+                    console.log("🔌 Socket connected:", !!socket, "isConnected:", isConnected);
+
                     if (socket && isConnected) {
-                        socket.emit('send-message', {
+                        const messagePayload = {
                             content: '',
                             audio: base64Audio,
                             chatUserId,
@@ -217,10 +236,30 @@ export default function Chat() {
                                 content: replyingTo.content || (replyingTo.audio ? "🎤 Audio Message" : replyingTo.image ? "📷 Image" : "Message"),
                                 username: 'Stranger'
                             } : undefined
+                        };
+
+                        console.log("📤 Sending audio message via socket:", {
+                            audioLength: base64Audio.length,
+                            hasReply: !!replyingTo,
+                            chatUserId
                         });
+
+                        socket.emit('send-message', messagePayload);
+                        console.log("✅ Audio message sent!");
                         setReplyingTo(null);
+                        setIsProcessingAudio(false);
+                    } else {
+                        console.error("❌ Cannot send audio: socket not connected");
+                        setIsProcessingAudio(false);
                     }
                 };
+
+                reader.onerror = () => {
+                    console.error("❌ Failed to read audio blob");
+                    setIsProcessingAudio(false);
+                };
+
+                reader.readAsDataURL(audioBlob);
             };
 
             mediaRecorder.start(100); // Collect chunks every 100ms
@@ -237,10 +276,20 @@ export default function Chat() {
 
     const stopRecordingAndSend = () => {
         if (mediaRecorderRef.current && isRecording) {
+            // Request any pending data before stopping
+            if (mediaRecorderRef.current.state === 'recording') {
+                mediaRecorderRef.current.requestData();
+            }
+
+            // Stop the recording - this will trigger onstop handler
             mediaRecorderRef.current.stop();
-            // Tracks will be stopped in onstop handler to ensure recording finishes
+
+            // Update UI state immediately
             setIsRecording(false);
             if (timerRef.current) clearInterval(timerRef.current);
+
+            // Note: Audio processing continues in onstop handler
+            // isProcessingAudio state will be set there
         }
     };
 
@@ -251,6 +300,7 @@ export default function Chat() {
             mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
             setRecordingStream(null);
             setIsRecording(false);
+            setIsProcessingAudio(false);
             if (timerRef.current) clearInterval(timerRef.current);
         }
     };
@@ -452,7 +502,7 @@ export default function Chat() {
                                             </div>
                                         )}
 
-                                        <div className="relative z-10 min-w-[120px] max-w-full">
+                                        <div className="relative z-10 max-w-full">
                                             {message.image && (
                                                 <div
                                                     className="relative mb-2 rounded-lg overflow-hidden group cursor-zoom-in"
@@ -589,7 +639,8 @@ export default function Chat() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={cancelRecording}
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full shrink-0"
+                                disabled={isProcessingAudio}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full shrink-0 disabled:opacity-50"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -611,9 +662,14 @@ export default function Chat() {
                             <Button
                                 size="icon"
                                 onClick={stopRecordingAndSend}
-                                className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shrink-0 shadow-md transform hover:scale-105 transition-all"
+                                disabled={isProcessingAudio}
+                                className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shrink-0 shadow-md transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Send className="h-3 w-3" />
+                                {isProcessingAudio ? (
+                                    <Loader className="h-3 w-3 animate-spin" />
+                                ) : (
+                                    <Send className="h-3 w-3" />
+                                )}
                             </Button>
                         </div>
                     ) : (

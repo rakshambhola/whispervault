@@ -34,6 +34,7 @@ app.prepare().then(() => {
     // Initialize Socket.io 
     const io = new SocketIOServer(server, {
         path: '/api/socket',
+        maxHttpBufferSize: 1e8, // 100 MB
         cors: {
             origin: process.env.NODE_ENV === 'production'
                 ? 'https://whispervault.vercel.app'
@@ -139,6 +140,14 @@ app.prepare().then(() => {
                 image?: string;
             }
         }) => {
+            console.log("📨 Received message:", {
+                hasContent: !!data.content,
+                hasImage: !!data.image,
+                hasAudio: !!data.audio,
+                audioLength: data.audio?.length,
+                hasReply: !!data.replyTo
+            });
+
             const userId = socket.data.userId;
             if (!userId) return;
 
@@ -159,17 +168,31 @@ app.prepare().then(() => {
                 roomId,
             };
 
+            console.log("💾 Storing message:", {
+                id: message.id,
+                hasAudio: !!message.audio,
+                audioLength: message.audio?.length
+            });
+
             room.messages.push(message);
 
             // Send to sender (with their ID)
             socket.emit('new-message', message);
+            console.log("✅ Sent message to sender");
 
             // Send to partner (with masked ID)
             // We use 'stranger' as the ID so the client knows it's not them
-            socket.to(roomId).emit('new-message', {
+            const partnerMessage = {
                 ...message,
                 userId: 'stranger'
+            };
+
+            console.log("📤 Broadcasting to partner:", {
+                hasAudio: !!partnerMessage.audio,
+                audioLength: partnerMessage.audio?.length
             });
+
+            socket.to(roomId).emit('new-message', partnerMessage);
         });
 
         socket.on('typing', (data: { isTyping: boolean }) => {
