@@ -61,7 +61,7 @@ export const calculateVoteScore = (upvotes: number, downvotes: number): number =
 };
 
 // Validate content
-export const validateContent = (content: string, maxLength: number = 500): { valid: boolean; error?: string } => {
+export const validateContent = (content: string, maxLength: number = 300): { valid: boolean; error?: string } => {
     if (!content || content.trim().length === 0) {
         return { valid: false, error: 'Content cannot be empty' };
     }

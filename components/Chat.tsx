@@ -499,7 +499,7 @@ export default function Chat() {
                                     isOwnMessage={isOwnMessage}
                                 >
                                     <div
-                                        className={`max-w-[85%] px-3 py-2 backdrop-blur-md border rounded-2xl shadow-sm ${isOwnMessage
+                                        className={`min-w-[100px] max-w-[85%] px-3 py-2 backdrop-blur-md border rounded-2xl shadow-sm ${isOwnMessage
                                             ? 'bg-primary/20 border-primary/20 text-foreground rounded-tr-sm'
                                             : 'bg-secondary/30 border-border/50 text-foreground rounded-tl-sm'
                                             }`}
@@ -538,13 +538,13 @@ export default function Chat() {
                                             )}
 
                                             {message.content && (
-                                                <p className="text-sm break-words break-all leading-relaxed whitespace-pre-wrap">
+                                                <p className="text-sm break-words leading-relaxed whitespace-pre-wrap mb-1">
                                                     {message.content}
                                                 </p>
                                             )}
 
-                                            <div className="flex justify-end mt-1 -mb-1">
-                                                <span className="text-[9px] opacity-70 select-none">
+                                            <div className="flex justify-end">
+                                                <span className="text-[9px] opacity-70 select-none whitespace-nowrap">
                                                     {formatChatTimestamp(message.timestamp)}
                                                 </span>
                                             </div>

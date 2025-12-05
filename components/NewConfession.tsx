@@ -103,7 +103,7 @@ export default function NewConfession({ onConfessionCreated }: NewConfessionProp
                             onChange={(e) => setContent(e.target.value)}
                             placeholder="What's on your mind? Share anonymously..."
                             className="min-h-[100px] sm:min-h-[120px] resize-none bg-secondary/30 border-border focus:border-primary rounded-lg text-base sm:text-[15px] placeholder:text-muted-foreground"
-                            maxLength={500}
+                            maxLength={300}
                         />
 
                         {/* Emoji Button */}

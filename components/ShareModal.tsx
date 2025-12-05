@@ -6,6 +6,7 @@ import { X, Download, Terminal, Heart, Sparkles, CloudRain, Smile, Ghost, Shuffl
 import { Confession, Reply } from '@/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import Logo from '@/components/Logo';
 
 interface ShareModalProps {
     confession: Confession;
@@ -43,12 +44,21 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
         switch (t) {
             case 'love': return '#FFF9F0';
             case 'valentine': return '#FDF6E3';
-            case 'sad': return '#F5F1E8';
+            case 'sad': return '#E8EBF7';
             case 'funny': return '#FFD700';
-            case 'dark': return '#1a1a1a';
-            case 'mix': return '#F5F1E8';
+            case 'dark': return '#0F0F1E';
+            case 'mix': return '#F0F4F8';
             default: return '#000000';
         }
+    };
+
+    // Dynamic font size based on content length
+    const getFontSize = (contentLength: number) => {
+        if (contentLength < 50) return 'text-5xl md:text-6xl';
+        if (contentLength < 100) return 'text-4xl md:text-5xl';
+        if (contentLength < 150) return 'text-3xl md:text-4xl';
+        if (contentLength < 200) return 'text-2xl md:text-3xl';
+        return 'text-xl md:text-2xl';
     };
 
     const handleDownload = async () => {
@@ -126,45 +136,58 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                 <div className="space-y-6">
                     <div ref={captureRef} className="w-full aspect-[4/5] relative flex flex-col overflow-hidden shadow-2xl transition-all duration-500">
 
+                        {/* Mix Theme - Modern Glassmorphic */}
                         {theme === 'mix' && (
-                            <div className="absolute inset-0 w-full h-full bg-[#F5F1E8] flex flex-col items-center justify-between p-12 text-center">
-                                {/* Header with small text */}
-                                <div className="w-full flex justify-between items-start">
-                                    <span className="text-xs font-sans text-[#3A3A3A] tracking-wide">Whisper Vault</span>
-                                    <div className="w-8 h-8 rounded-full border border-[#3A3A3A] flex items-center justify-center">
-                                        <span className="text-[#3A3A3A] text-sm">→</span>
+                            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#F0F4F8] via-[#E8EBF7] to-[#F0F4F8] flex flex-col items-center justify-between p-12 text-center overflow-hidden">
+                                {/* Glassmorphic background elements */}
+                                <div className="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-violet-400/30 to-blue-400/30 rounded-full blur-3xl" />
+                                <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tl from-indigo-400/30 to-purple-400/30 rounded-full blur-3xl" />
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-300/20 to-blue-300/20 rounded-full blur-2xl" />
+
+                                {/* Header */}
+                                <div className="relative z-10 w-full flex justify-between items-center">
+                                    <span className="text-xs font-sans text-slate-600 tracking-wider uppercase">Whisper Vault</span>
+                                    <div className="w-8 h-8 rounded-full bg-white/40 backdrop-blur-md border border-white/60 flex items-center justify-center shadow-lg">
+                                        <span className="text-slate-700 text-sm">→</span>
                                     </div>
                                 </div>
 
-                                {/* Main content - centered */}
-                                <div className="flex-1 flex flex-col items-center justify-center max-w-full px-4">
-                                    <div style={{ fontFamily: '"Playfair Display", serif' }} className="leading-tight">
-                                        <p className="text-4xl md:text-5xl font-normal italic text-[#2A2A2A]">{confession.content}</p>
-                                        {reply && (
-                                            <div className="mt-8">
-                                                <p className="text-2xl md:text-3xl italic text-[#4A4A4A]">{reply.content}</p>
+                                {/* Main content - Glassmorphic card */}
+                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-4">
+                                    <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl p-8 shadow-2xl">
+                                        <div style={{ fontFamily: '"Outfit", sans-serif' }} className="leading-tight">
+                                            <p className={`${getFontSize(confession.content.length)} font-semibold bg-gradient-to-br from-slate-800 to-slate-600 bg-clip-text text-transparent`}>
+                                                {confession.content}
+                                            </p>
+                                            {reply && (
+                                                <div className="mt-6 pt-6 border-t border-slate-300/50">
+                                                    <p className="text-lg md:text-xl text-slate-600 italic">{reply.content}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {confession.tags && confession.tags.length > 0 && (
+                                            <div className="mt-6 flex flex-wrap justify-center gap-2">
+                                                {confession.tags.map(tag => (
+                                                    <span key={tag} className="px-3 py-1 text-xs font-medium text-slate-600 bg-white/50 backdrop-blur-sm rounded-full border border-white/60">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
-                                    {confession.tags && confession.tags.length > 0 && (
-                                        <div className="mt-12 flex flex-wrap justify-center gap-3">
-                                            {confession.tags.map(tag => (
-                                                <span key={tag} className="text-xs font-sans text-[#6A6A6A] uppercase tracking-widest">{tag}</span>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
 
-                                {/* Footer */}
-                                <div className="w-full">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <div className="w-4 h-4 bg-[#3A3A3A]" style={{ maskImage: "url('/logo.png')", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center", WebkitMaskImage: "url('/logo.png')", WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center" }} />
-                                        <span className="text-xs font-sans text-[#3A3A3A] tracking-wide">@whispervault</span>
+                                {/* Footer with Logo */}
+                                <div className="relative z-10 w-full">
+                                    <div className="flex items-center justify-center gap-2 bg-white/30 backdrop-blur-md rounded-full px-4 py-2 border border-white/60 inline-flex mx-auto shadow-lg">
+                                        <Logo size={16} color="#475569" />
+                                        <span className="text-xs font-medium text-slate-600 tracking-wide">@whispervault</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
+                        {/* Code Theme - unchanged */}
                         {theme === 'code' && (
                             <>
                                 <div className="absolute inset-0 w-full h-full bg-[#0a0a0a]">
@@ -189,7 +212,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                             <div className="w-10" />
                                         </div>
                                         <div className="p-5 font-mono text-sm leading-relaxed relative group">
-                                            <div className="flex gap-4">
+                                            <div className=" flex gap-4">
                                                 <div className="flex flex-col text-right select-none text-white/30 text-xs pt-[2px] min-w-[1.5rem]">
                                                     {getLineNumbers().map(n => (<span key={n} className="leading-relaxed">{n}</span>))}
                                                 </div>
@@ -209,13 +232,14 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 </div>
                                 <div className="relative z-10 p-6 pb-8 text-center">
                                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10">
-                                        <div className="w-4 h-4 bg-white" style={{ maskImage: "url('/logo.png')", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center", WebkitMaskImage: "url('/logo.png')", WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center" }} />
+                                        <Logo size={16} color="#FFFFFF" />
                                         <span className="text-xs font-bold text-white/80 tracking-widest uppercase">Whisper Vault</span>
                                     </div>
                                 </div>
                             </>
                         )}
 
+                        {/* Love & Valentine themes - unchanged, just update logo */}
                         {theme === 'love' && (
                             <div className="absolute inset-0 w-full h-full bg-[#FFF9F0] flex flex-col items-center justify-center p-8 text-center">
                                 <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
@@ -229,7 +253,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 <div className="absolute bottom-32 left-16 text-xl text-pink-400/40">✨</div>
                                 <div className="relative z-10 max-w-full">
                                     <div style={{ fontFamily: 'Caveat, cursive' }} className="text-[#C0392B] leading-tight">
-                                        <p className="text-4xl md:text-5xl mb-8 font-bold transform -rotate-2">"{confession.content}"</p>
+                                        <p className={`${getFontSize(confession.content.length)} mb-8 font-bold transform -rotate-2`}>"{confession.content}"</p>
                                         {reply && (<div className="mt-8 relative"><div className="h-px w-24 bg-[#C0392B]/30 mx-auto mb-6" /><p className="text-2xl md:text-3xl text-[#D98880] transform rotate-1">{reply.content}</p></div>)}
                                     </div>
                                     {confession.tags && confession.tags.length > 0 && (
@@ -240,7 +264,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 </div>
                                 <div className="absolute bottom-8 left-0 right-0 text-center">
                                     <div className="inline-flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-[#C0392B]" style={{ maskImage: "url('/logo.png')", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center", WebkitMaskImage: "url('/logo.png')", WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center" }} />
+                                        <Logo size={16} color="#C0392B" />
                                         <span className="text-sm font-bold text-[#C0392B] tracking-widest uppercase">Whisper Vault</span>
                                     </div>
                                 </div>
@@ -260,7 +284,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 <div className="relative z-10 max-w-full">
                                     <div style={{ fontFamily: '"Great Vibes", cursive' }} className="text-[#D32F2F] leading-tight">
                                         <p className="text-xl mb-4 tracking-widest uppercase font-sans text-red-800/60">Happy Valentine's Day</p>
-                                        <p className="text-5xl md:text-6xl mb-8 drop-shadow-sm">{confession.content}</p>
+                                        <p className={`${getFontSize(confession.content.length)} mb-8 drop-shadow-sm`}>{confession.content}</p>
                                         {reply && (<div className="mt-8"><p className="text-3xl md:text-4xl text-[#E57373]">{reply.content}</p></div>)}
                                     </div>
                                     {confession.tags && confession.tags.length > 0 && (
@@ -271,48 +295,66 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 </div>
                                 <div className="absolute bottom-8 left-0 right-0 text-center">
                                     <div className="inline-flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-red-800/60" style={{ maskImage: "url('/logo.png')", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center", WebkitMaskImage: "url('/logo.png')", WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center" }} />
+                                        <Logo size={16} color="#8B0000" />
                                         <span className="text-xs font-bold text-red-800/60 tracking-widest uppercase font-sans">Whisper Vault</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
+                        {/* Sad Theme - Redesigned Modern Glassmorphic */}
                         {theme === 'sad' && (
-                            <div className="absolute inset-0 w-full h-full bg-[#F5F1E8] flex flex-col items-center justify-center p-12 text-center">
-                                {/* Top divider */}
-                                <div className="absolute top-12 left-12 right-12 h-px bg-[#4A4A4A]" />
+                            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#E8EBF7] via-[#D6DDEF] to-[#E8EBF7] flex flex-col items-center justify-between p-12 text-center overflow-hidden">
+                                {/* Glassmorphic background elements */}
+                                <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl" />
+                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-slate-400/20 to-blue-400/20 rounded-full blur-3xl" />
 
-                                <div className="relative z-10 max-w-full flex-1 flex flex-col items-center justify-center">
-                                    <div style={{ fontFamily: '"Playfair Display", serif' }} className="leading-tight">
-                                        <p className="text-4xl md:text-5xl mb-6 font-normal text-[#3A3A3A]">{confession.content}</p>
-                                        {reply && (
-                                            <div className="mt-8">
-                                                <p className="text-sm uppercase tracking-[0.2em] text-[#6A6A6A] mb-4 font-sans">{reply.content}</p>
+                                {/* Floating rain drops */}
+                                <div className="absolute top-12 left-1/4 w-1 h-12 bg-blue-300/30 rounded-full animate-[fall_3s_ease-in_infinite]" />
+                                <div className="absolute top-20 right-1/3 w-1 h-16 bg-blue-300/30 rounded-full animate-[fall_4s_ease-in_infinite_0.5s]" />
+                                <div className="absolute top-16 left-1/2 w-1 h-14 bg-blue-300/30 rounded-full animate-[fall_3.5s_ease-in_infinite_1s]" />
+
+                                {/* Header */}
+                                <div className="relative z-10 w-full">
+                                    <span className="text-xs font-sans text-slate-500/80 tracking-widest uppercase">Whisper Vault</span>
+                                </div>
+
+                                {/* Main content - Glassmorphic card */}
+                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-4">
+                                    <div className="bg-white/30 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl">
+                                        <div style={{ fontFamily: '"Playfair Display", serif' }} className="leading-tight">
+                                            <p className={`${getFontSize(confession.content.length)} font-light italic text-slate-700`}>
+                                                {confession.content}
+                                            </p>
+                                            {reply && (
+                                                <div className="mt-6 pt-6 border-t border-slate-400/30">
+                                                    <p className="text-base md:text-lg text-slate-600 italic">{reply.content}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {confession.tags && confession.tags.length > 0 && (
+                                            <div className="mt-6 flex flex-wrap justify-center gap-2">
+                                                {confession.tags.map(tag => (
+                                                    <span key={tag} className="text-xs font-medium text-slate-600/70 tracking-wider uppercase">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
-                                    {confession.tags && confession.tags.length > 0 && (
-                                        <div className="mt-8 flex flex-wrap justify-center gap-3">
-                                            {confession.tags.map(tag => (
-                                                <span key={tag} className="text-xs font-sans text-[#6A6A6A] uppercase tracking-widest">{tag}</span>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
 
-                                {/* Bottom divider */}
-                                <div className="absolute bottom-12 left-12 right-12 h-px bg-[#4A4A4A]" />
-
-                                <div className="absolute bottom-16 left-0 right-0 text-center">
-                                    <div className="inline-flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-[#6A6A6A]" style={{ maskImage: "url('/logo.png')", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center", WebkitMaskImage: "url('/logo.png')", WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center" }} />
-                                        <span className="text-xs font-sans text-[#6A6A6A] tracking-[0.2em] uppercase">Whisper Vault</span>
+                                {/* Footer with Logo */}
+                                <div className="relative z-10 w-full">
+                                    <div className="flex items-center justify-center gap-2 bg-white/25 backdrop-blur-md rounded-full px-4 py-2 border border-white/50 inline-flex mx-auto shadow-lg">
+                                        <Logo size={14} color="#64748B" />
+                                        <span className="text-xs font-medium text-slate-600 tracking-wide">@whispervault</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
+                        {/* Funny theme - unchanged, just update logo */}
                         {theme === 'funny' && (
                             <div className="absolute inset-0 w-full h-full bg-[#FFD700] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
                                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
@@ -320,7 +362,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" />
                                 <div className="relative z-10 max-w-full transform rotate-1">
                                     <div style={{ fontFamily: 'Bangers, cursive' }} className="text-black leading-tight tracking-wide">
-                                        <p className="text-4xl md:text-5xl mb-6 drop-shadow-[2px_2px_0px_rgba(255,255,255,1)]">{confession.content}</p>
+                                        <p className={`${getFontSize(confession.content.length)} mb-6 drop-shadow-[2px_2px_0px_rgba(255,255,255,1)]`}>{confession.content}</p>
                                         {reply && (<div className="mt-6 bg-white border-4 border-black p-4 rounded-xl shadow-[4px_4px_0px_rgba(0,0,0,1)] transform -rotate-2"><p className="text-2xl md:text-3xl text-black">{reply.content}</p></div>)}
                                     </div>
                                     {confession.tags && confession.tags.length > 0 && (
@@ -331,44 +373,59 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 </div>
                                 <div className="absolute bottom-6 left-0 right-0 text-center">
                                     <div className="inline-flex items-center gap-2 bg-black text-[#FFD700] px-4 py-1 font-bold text-sm uppercase tracking-wider transform -rotate-1 shadow-[4px_4px_0px_rgba(255,255,255,1)]">
-                                        <div className="w-4 h-4 bg-[#FFD700]" style={{ maskImage: "url('/logo.png')", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center", WebkitMaskImage: "url('/logo.png')", WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center" }} />
+                                        <Logo size={16} color="#FFD700" />
                                         <span>Whisper Vault</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
+                        {/* Dark Theme - Redesigned Modern Glassmorphic */}
                         {theme === 'dark' && (
-                            <div className="absolute inset-0 w-full h-full bg-[#1a1a1a] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-                                <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#0F0F1E] via-[#1A1A2E] to-[#0F0F1E] flex flex-col items-center justify-between p-12 text-center overflow-hidden">
+                                {/* Glassmorphic background elements */}
+                                <div className="absolute inset-0 opacity-30 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                <div className="absolute top-0 left-0 w-80 h-80 bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-full blur-3xl" />
+                                <div className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-tl from-indigo-600/20 to-purple-600/20 rounded-full blur-3xl" />
 
-                                {/* Spotlight effect from top */}
-                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-32 bg-yellow-400/30 blur-2xl" />
-                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[60px] border-l-transparent border-r-[60px] border-r-transparent border-t-[100px] border-t-yellow-400/20 blur-xl" />
+                                {/* Spotlight effect */}
+                                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-32 bg-violet-400/20 blur-2xl" />
 
-                                {/* Silhouette shapes */}
-                                <div className="absolute bottom-0 left-0 w-64 h-96 bg-black/40 blur-sm" style={{ clipPath: 'polygon(0 100%, 30% 40%, 50% 60%, 70% 30%, 100% 100%)' }} />
-                                <div className="absolute bottom-0 right-0 w-64 h-96 bg-black/40 blur-sm" style={{ clipPath: 'polygon(0 100%, 30% 30%, 50% 60%, 70% 40%, 100% 100%)' }} />
-
-                                {/* Content in spotlight */}
-                                <div className="relative z-10 max-w-full">
-                                    <div className="bg-yellow-400/10 backdrop-blur-sm rounded-full px-8 py-12 border border-yellow-400/20">
-                                        <div style={{ fontFamily: '"Special Elite", cursive' }} className="text-yellow-200/90 leading-relaxed">
-                                            <p className="text-2xl md:text-3xl mb-4 tracking-wide">{confession.content}</p>
-                                            {reply && (<div className="mt-6"><p className="text-lg md:text-xl text-yellow-300/70">{reply.content}</p></div>)}
-                                        </div>
-                                    </div>
-                                    {confession.tags && confession.tags.length > 0 && (
-                                        <div className="mt-8 flex flex-wrap justify-center gap-2">
-                                            {confession.tags.map(tag => (<span key={tag} className="text-xs font-mono text-yellow-400/40 uppercase tracking-[0.2em]">[{tag}]</span>))}
-                                        </div>
-                                    )}
+                                {/* Header */}
+                                <div className="relative z-10 w-full">
+                                    <span className="text-xs font-sans text-violet-300/50 tracking-widest uppercase">Whisper Vault</span>
                                 </div>
 
-                                <div className="absolute bottom-8 left-0 right-0 text-center">
-                                    <div className="inline-flex items-center gap-2">
-                                        <div className="w-4 h-4 bg-yellow-400/40" style={{ maskImage: "url('/logo.png')", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center", WebkitMaskImage: "url('/logo.png')", WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center" }} />
-                                        <span className="text-[10px] font-mono text-yellow-400/40 tracking-[0.5em] uppercase">Whisper Vault</span>
+                                {/* Main content - Glassmorphic card */}
+                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-4">
+                                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+                                        <div style={{ fontFamily: '"Outfit", sans-serif' }} className="leading-tight">
+                                            <p className={`${getFontSize(confession.content.length)} font-light text-violet-100`}>
+                                                {confession.content}
+                                            </p>
+                                            {reply && (
+                                                <div className="mt-6 pt-6 border-t border-violet-400/20">
+                                                    <p className="text-base md:text-lg text-violet-200/80 italic">{reply.content}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {confession.tags && confession.tags.length > 0 && (
+                                            <div className="mt-6 flex flex-wrap justify-center gap-2">
+                                                {confession.tags.map(tag => (
+                                                    <span key={tag} className="px-3 py-1 text-xs font-medium text-violet-300/70 bg-white/5 backdrop-blur-sm rounded-full border border-white/10">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Footer with Logo */}
+                                <div className="relative z-10 w-full">
+                                    <div className="flex items-center justify-center gap-2 bg-white/5 backdrop-blur-md rounded-full px-4 py-2 border border-white/10 inline-flex mx-auto shadow-lg">
+                                        <Logo size={14} color="#A78BFA" />
+                                        <span className="text-xs font-medium text-violet-300/80 tracking-wide">@whispervault</span>
                                     </div>
                                 </div>
                             </div>
