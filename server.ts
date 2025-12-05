@@ -43,8 +43,11 @@ app.prepare().then(() => {
         },
     });
 
+    console.log('🚀 Socket.IO server initialized');
+    console.log('📡 Listening for connections with maxHttpBufferSize: 100 MB');
+
     io.on('connection', (socket) => {
-        console.log('User connected:', socket.id);
+        console.log('✅ User connected:', socket.id);
 
         // Helper to broadcast online count
         const broadcastOnlineCount = () => {
