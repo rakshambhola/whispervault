@@ -262,7 +262,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                             </>
                         )}
 
-                        {/* Love & Valentine themes - unchanged, just update logo */}
+                        {/* Love & Valentine themes - unchanged */}
                         {theme === 'love' && (
                             <div className="absolute inset-0 w-full h-full bg-[#FFF9F0] flex flex-col items-center justify-center p-8 text-center">
                                 <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
@@ -478,6 +478,6 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                     </Button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
