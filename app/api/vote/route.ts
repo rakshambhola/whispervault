@@ -6,9 +6,100 @@ import { prisma } from '@/lib/db/prisma';
 // Force Node.js runtime (required for Mongoose)
 export const runtime = 'nodejs';
 
+// Rate limiting storage (in production, use Redis or similar)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+// Security: Check if request is from a real browser
+function isBrowserRequest(request: NextRequest): boolean {
+    const userAgent = request.headers.get('user-agent') || '';
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+
+    // Check for common browser user agents
+    const browserPatterns = [
+        /Mozilla/i,
+        /Chrome/i,
+        /Safari/i,
+        /Firefox/i,
+        /Edge/i,
+        /Opera/i
+    ];
+
+    const hasBrowserUA = browserPatterns.some(pattern => pattern.test(userAgent));
+
+    // Check if it's a known bot/tool
+    const botPatterns = [
+        /curl/i,
+        /postman/i,
+        /insomnia/i,
+        /python/i,
+        /java/i,
+        /axios/i,
+        /fetch/i,
+        /node-fetch/i,
+        /got/i,
+        /request/i,
+        /http-client/i,
+        /bot/i,
+        /crawler/i,
+        /spider/i
+    ];
+
+    const isBot = botPatterns.some(pattern => pattern.test(userAgent));
+
+    // Must have valid origin or referer from our domain
+    const host = request.headers.get('host') || '';
+    const hasValidOrigin = Boolean(
+        (origin && origin.includes(host)) ||
+        (referer && referer.includes(host))
+    );
+
+    return hasBrowserUA && !isBot && hasValidOrigin;
+}
+
+// Rate limiting: Max 5 votes per IP per minute
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    const limit = rateLimitMap.get(ip);
+
+    if (!limit || now > limit.resetTime) {
+        // Reset or create new limit
+        rateLimitMap.set(ip, {
+            count: 1,
+            resetTime: now + 60000 // 1 minute
+        });
+        return true;
+    }
+
+    if (limit.count >= 5) {
+        return false; // Rate limit exceeded
+    }
+
+    limit.count++;
+    return true;
+}
+
+// Clean up old rate limit entries every 5 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, limit] of rateLimitMap.entries()) {
+        if (now > limit.resetTime) {
+            rateLimitMap.delete(ip);
+        }
+    }
+}, 300000);
+
 // POST - Vote on confession or reply
 export async function POST(request: NextRequest) {
     try {
+        // Security Check 1: Verify it's a browser request
+        if (!isBrowserRequest(request)) {
+            return NextResponse.json(
+                { error: 'Invalid request source. Please use the website.' },
+                { status: 403 }
+            );
+        }
+
         const body = await request.json();
         const { targetId, targetType, voteType, action } = body;
 
@@ -21,6 +112,14 @@ export async function POST(request: NextRequest) {
 
         // Get user's IP for tracking
         const ip = await getUserIP();
+
+        // Security Check 2: Rate limiting
+        if (!checkRateLimit(ip)) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please wait a minute.' },
+                { status: 429 }
+            );
+        }
 
         let success = false;
 
