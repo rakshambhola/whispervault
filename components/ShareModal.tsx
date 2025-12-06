@@ -52,13 +52,13 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
         }
     };
 
-    // Dynamic font size based on content length - more conservative sizing
+    // Dynamic font size based on content length - mobile-first responsive sizing
     const getFontSize = (contentLength: number) => {
-        if (contentLength < 40) return 'text-4xl md:text-5xl';
-        if (contentLength < 80) return 'text-3xl md:text-4xl';
-        if (contentLength < 120) return 'text-2xl md:text-3xl';
-        if (contentLength < 180) return 'text-xl md:text-2xl';
-        return 'text-lg md:text-xl';
+        if (contentLength < 40) return 'text-2xl sm:text-3xl md:text-4xl lg:text-5xl';
+        if (contentLength < 80) return 'text-xl sm:text-2xl md:text-3xl lg:text-4xl';
+        if (contentLength < 120) return 'text-lg sm:text-xl md:text-2xl lg:text-3xl';
+        if (contentLength < 180) return 'text-base sm:text-lg md:text-xl lg:text-2xl';
+        return 'text-sm sm:text-base md:text-lg lg:text-xl';
     };
 
     const handleDownload = async () => {
@@ -92,7 +92,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl p-4 animate-in fade-in duration-200 overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl p-2 sm:p-4 md:p-6 animate-in fade-in duration-200 overflow-y-auto"
             onClick={onClose}
         >
             <style jsx global>{`
@@ -100,11 +100,11 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
             `}</style>
 
             <div
-                className="relative w-full max-w-[420px] my-auto"
+                className="relative w-full max-w-[95vw] sm:max-w-[420px] my-auto"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="absolute -top-16 right-0 flex gap-2 z-50">
-                    <div className="bg-black/50 backdrop-blur-md rounded-full p-1 flex border border-white/10 gap-1 overflow-x-auto max-w-[calc(100vw-80px)] sm:max-w-none scrollbar-hide">
+                <div className="absolute -top-12 sm:-top-16 left-0 right-0 flex gap-2 z-50 justify-between">
+                    <div className="bg-black/50 backdrop-blur-md rounded-full p-1 flex border border-white/10 gap-1 overflow-x-auto max-w-[calc(100vw-120px)] sm:max-w-[280px] scrollbar-hide">
                         <Button onClick={() => setTheme('mix')} variant="ghost" size="icon" className={cn("rounded-full w-8 h-8 shrink-0", theme === 'mix' ? "bg-violet-500/20 text-violet-400" : "text-white/50 hover:text-violet-400")} title="Mix">
                             <Shuffle className="h-4 w-4" />
                         </Button>
@@ -128,17 +128,17 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                         </Button>
                     </div>
 
-                    <Button onClick={onClose} variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/10 rounded-full shrink-0">
-                        <X className="h-6 w-6" />
+                    <Button onClick={onClose} variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/10 rounded-full shrink-0 h-8 w-8 sm:h-10 sm:w-10">
+                        <X className="h-5 w-5 sm:h-6 sm:w-6" />
                     </Button>
                 </div>
 
-                <div className="space-y-6">
-                    <div ref={captureRef} className="w-full aspect-[4/5] relative flex flex-col overflow-hidden shadow-2xl transition-all duration-500">
+                <div className="space-y-4 sm:space-y-6">
+                    <div ref={captureRef} className="w-full aspect-[4/5] relative flex flex-col overflow-hidden shadow-2xl transition-all duration-500 rounded-xl sm:rounded-2xl">
 
                         {/* Mix Theme - Vibrant & Uplifting */}
                         {theme === 'mix' && (
-                            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col items-center justify-between p-10 text-center overflow-hidden">
+                            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col items-center justify-between p-6 sm:p-8 md:p-10 text-center overflow-hidden">
                                 {/* Playful floating elements */}
                                 <div className="absolute top-10 right-10 text-4xl animate-bounce" style={{ animationDuration: '2s' }}>✨</div>
                                 <div className="absolute bottom-20 left-10 text-3xl animate-bounce" style={{ animationDuration: '3s', animationDelay: '0.5s' }}>💫</div>
@@ -160,8 +160,8 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 </div>
 
                                 {/* Main content with colorful accent */}
-                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-6">
-                                    <div className="bg-white/60 backdrop-blur-md rounded-3xl p-8 border-2 border-purple-100/60 shadow-xl">
+                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-3 sm:px-4 md:px-6">
+                                    <div className="bg-white/60 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border-2 border-purple-100/60 shadow-xl">
                                         <div style={{ fontFamily: '"Outfit", sans-serif' }} className="leading-relaxed">
                                             <p className={`${getFontSize(confession.content.length)} font-semibold bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700 bg-clip-text text-transparent mb-6`}>
                                                 {confession.content}
@@ -207,7 +207,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-40 bg-cyan-500/10 blur-3xl" />
                                 </div>
 
-                                <div className="relative z-10 flex-1 flex flex-col p-8">
+                                <div className="relative z-10 flex-1 flex flex-col p-4 sm:p-6 md:p-8">
                                     {/* Futuristic header */}
                                     <div className="flex items-center justify-between mb-8 pb-4 border-b border-emerald-500/20">
                                         <div className="flex items-center gap-4">
@@ -264,7 +264,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
 
                         {/* Love & Valentine themes - unchanged */}
                         {theme === 'love' && (
-                            <div className="absolute inset-0 w-full h-full bg-[#FFF9F0] flex flex-col items-center justify-center p-8 text-center">
+                            <div className="absolute inset-0 w-full h-full bg-[#FFF9F0] flex flex-col items-center justify-center p-6 sm:p-8 md:p-10 text-center">
                                 <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
                                     <svg viewBox="0 0 200 200" className="w-[120%] h-[120%] text-pink-400 fill-current animate-pulse duration-[3000ms]">
                                         <path d="M100 180s-60-40-80-80c-20-40 10-70 50-60 20 5 30 20 30 20s10-15 30-20c40-10 70 20 50 60C160 140 100 180 100 180z" />
@@ -295,7 +295,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                         )}
 
                         {theme === 'valentine' && (
-                            <div className="absolute inset-0 w-full h-full bg-[#FDF6E3] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+                            <div className="absolute inset-0 w-full h-full bg-[#FDF6E3] flex flex-col items-center justify-center p-6 sm:p-8 md:p-10 text-center overflow-hidden">
                                 <div className="absolute inset-0 pointer-events-none">
                                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] bg-red-400/20 blur-3xl rounded-full animate-pulse" />
                                     <Heart className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 text-red-500/10 fill-current blur-xl" />
@@ -327,7 +327,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
 
                         {/* Sad Theme - Redesigned Modern Glassmorphic */}
                         {theme === 'sad' && (
-                            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#E8EBF7] via-[#D6DDEF] to-[#E8EBF7] flex flex-col items-center justify-between p-12 text-center overflow-hidden">
+                            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#E8EBF7] via-[#D6DDEF] to-[#E8EBF7] flex flex-col items-center justify-between p-6 sm:p-8 md:p-12 text-center overflow-hidden">
                                 {/* Glassmorphic background elements */}
                                 <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl" />
                                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-slate-400/20 to-blue-400/20 rounded-full blur-3xl" />
@@ -346,8 +346,8 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 </div>
 
                                 {/* Main content - Glassmorphic card */}
-                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-4">
-                                    <div className="bg-white/30 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl">
+                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-3 sm:px-4">
+                                    <div className="bg-white/30 backdrop-blur-xl border border-white/50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl">
                                         <div style={{ fontFamily: '"Playfair Display", serif' }} className="leading-tight">
                                             <p className={`${getFontSize(confession.content.length)} font-light italic text-slate-700`}>
                                                 {confession.content}
@@ -374,7 +374,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
 
                         {/* Funny theme - unchanged, just update logo */}
                         {theme === 'funny' && (
-                            <div className="absolute inset-0 w-full h-full bg-[#FFD700] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+                            <div className="absolute inset-0 w-full h-full bg-[#FFD700] flex flex-col items-center justify-center p-6 sm:p-8 md:p-10 text-center overflow-hidden">
                                 <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
                                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" />
                                 <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" />
@@ -402,7 +402,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
 
                         {/* Dark Theme - Cosmic Mystery */}
                         {theme === 'dark' && (
-                            <div className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-between p-10 text-center overflow-hidden">
+                            <div className="absolute inset-0 w-full h-full bg-black flex flex-col items-center justify-between p-6 sm:p-8 md:p-10 text-center overflow-hidden">
                                 {/* Starry background */}
                                 <div className="absolute inset-0">
                                     <div className="absolute top-10 left-10 w-1 h-1 bg-white rounded-full animate-pulse" />
@@ -429,7 +429,7 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                                 </div>
 
                                 {/* Mysterious content */}
-                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-6">
+                                <div className="relative z-10 flex-1 flex flex-col items-center justify-center max-w-full px-4 sm:px-6">
                                     {/* Quote mark */}
                                     <div className="text-6xl text-purple-500/20 font-serif mb-4">"</div>
 
@@ -473,8 +473,8 @@ export default function ShareModal({ confession, reply, onClose }: ShareModalPro
                         )}
                     </div>
 
-                    <Button onClick={handleDownload} disabled={isGenerating} className="w-full bg-white text-black hover:bg-white/90 font-bold h-12 text-base rounded-xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
-                        {isGenerating ? (<span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />Generating...</span>) : (<span className="flex items-center gap-2"><Download className="w-4 h-4" />Download Image</span>)}
+                    <Button onClick={handleDownload} disabled={isGenerating} className="w-full bg-white text-black hover:bg-white/90 font-bold h-10 sm:h-11 md:h-12 text-sm sm:text-base rounded-lg sm:rounded-xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
+                        {isGenerating ? (<span className="flex items-center gap-2"><div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /><span className="text-xs sm:text-sm md:text-base">Generating...</span></span>) : (<span className="flex items-center gap-2"><Download className="w-3 h-3 sm:w-4 sm:h-4" /><span className="text-xs sm:text-sm md:text-base">Download Image</span></span>)}
                     </Button>
                 </div>
             </div>

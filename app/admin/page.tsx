@@ -208,13 +208,13 @@ export default function AdminPage() {
         <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
             {/* Navbar */}
             <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-background/40 border-b border-white/10 supports-[backdrop-filter]:bg-background/40 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10">
-                            <Shield className="h-6 w-6 text-primary" />
+                <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 h-14 sm:h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/10">
+                            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                         </div>
-                        <div>
-                            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+                        <div className="hidden sm:block">
+                            <h1 className="text-base sm:text-lg font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
                                 Admin Console
                             </h1>
                         </div>
@@ -241,9 +241,9 @@ export default function AdminPage() {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+            <main className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-6 sm:space-y-8">
                 {/* Stats Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {[
                         { title: 'Total Confessions', value: stats?.totalConfessions || 0, icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'group-hover:border-blue-500/30' },
                         { title: 'Active Reports', value: stats?.totalReports || 0, icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'group-hover:border-amber-500/30' },
@@ -257,13 +257,13 @@ export default function AdminPage() {
                             className="group"
                         >
                             <Card className={`bg-card/30 backdrop-blur-md border-white/10 transition-all duration-300 ${stat.border}`}>
-                                <CardContent className="p-6 flex items-center justify-between">
+                                <CardContent className="p-4 sm:p-5 md:p-6 flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm font-medium text-muted-foreground mb-1">{stat.title}</p>
-                                        <h3 className="text-3xl font-bold tracking-tight">{stat.value}</h3>
+                                        <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">{stat.title}</p>
+                                        <h3 className="text-2xl sm:text-3xl font-bold tracking-tight">{stat.value}</h3>
                                     </div>
-                                    <div className={`p-3 rounded-xl ${stat.bg} transition-transform duration-300 group-hover:scale-110`}>
-                                        <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                                    <div className={`p-2 sm:p-3 rounded-xl ${stat.bg} transition-transform duration-300 group-hover:scale-110`}>
+                                        <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${stat.color}`} />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -273,26 +273,26 @@ export default function AdminPage() {
 
                 {/* Main Content */}
                 <Tabs defaultValue="reports" className="w-full">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                        <TabsList className="bg-secondary/30 backdrop-blur-md p-1 rounded-xl border border-white/5">
-                            <TabsTrigger value="reports" className="data-[state=active]:bg-background/60 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-lg px-4 transition-all">
-                                Reports <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-0">{reports.length}</Badge>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <TabsList className="bg-secondary/30 backdrop-blur-md p-1 rounded-xl border border-white/5 w-full md:w-auto overflow-x-auto">
+                            <TabsTrigger value="reports" className="data-[state=active]:bg-background/60 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-lg px-3 sm:px-4 text-xs sm:text-sm transition-all">
+                                <span className="hidden sm:inline">Reports</span><span className="sm:hidden">📋</span> <Badge variant="secondary" className="ml-1 sm:ml-2 bg-primary/10 text-primary border-0 text-xs">{reports.length}</Badge>
                             </TabsTrigger>
-                            <TabsTrigger value="all" className="data-[state=active]:bg-background/60 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-lg px-4 transition-all">
-                                All Posts
+                            <TabsTrigger value="all" className="data-[state=active]:bg-background/60 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-lg px-3 sm:px-4 text-xs sm:text-sm transition-all">
+                                <span className="hidden sm:inline">All Posts</span><span className="sm:hidden">📝</span>
                             </TabsTrigger>
-                            <TabsTrigger value="security" className="data-[state=active]:bg-background/60 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-lg px-4 transition-all">
-                                Security
+                            <TabsTrigger value="security" className="data-[state=active]:bg-background/60 data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-lg px-3 sm:px-4 text-xs sm:text-sm transition-all">
+                                <span className="hidden sm:inline">Security</span><span className="sm:hidden">🔒</span>
                             </TabsTrigger>
                         </TabsList>
 
                         <div className="relative w-full md:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Search content or ID..."
+                                placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 bg-background/50 border-white/10 focus:ring-primary/20"
+                                className="pl-9 bg-background/50 border-white/10 focus:ring-primary/20 text-sm"
                             />
                         </div>
                     </div>
@@ -324,9 +324,9 @@ export default function AdminPage() {
                                         >
                                             <Card className="bg-card/40 backdrop-blur-md border-red-500/20 shadow-lg overflow-hidden group hover:bg-card/50 transition-colors">
                                                 <div className="absolute top-0 left-0 w-1 h-full bg-red-500/50" />
-                                                <CardContent className="p-6">
-                                                    <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                                                        <div className="flex items-center gap-3">
+                                                <CardContent className="p-4 sm:p-5 md:p-6">
+                                                    <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 mb-4">
+                                                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                                                             <Badge variant="destructive" className="animate-pulse shadow-red-500/20 shadow-lg">
                                                                 {confession.reportCount} Reports
                                                             </Badge>
@@ -337,40 +337,40 @@ export default function AdminPage() {
                                                                 {formatTimestamp(confession.timestamp)}
                                                             </span>
                                                         </div>
-                                                        <div className="flex gap-2">
+                                                        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
                                                                 onClick={() => handleAction('dismiss_report', { id: confession.id })}
-                                                                className="hover:bg-green-500/10 hover:text-green-500 hover:border-green-500/50 transition-colors"
+                                                                className="hover:bg-green-500/10 hover:text-green-500 hover:border-green-500/50 transition-colors text-xs sm:text-sm"
                                                             >
-                                                                <CheckCircle className="h-4 w-4 mr-2" />
-                                                                Keep
+                                                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                                                <span className="hidden sm:inline">Keep</span><span className="sm:hidden">✓</span>
                                                             </Button>
                                                             <Button
                                                                 variant="destructive"
                                                                 size="sm"
                                                                 onClick={() => handleAction('delete_confession', { id: confession.id })}
-                                                                className="shadow-lg shadow-red-500/20"
+                                                                className="shadow-lg shadow-red-500/20 text-xs sm:text-sm"
                                                             >
-                                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                                Delete
+                                                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                                                <span className="hidden sm:inline">Delete</span><span className="sm:hidden">🗑</span>
                                                             </Button>
                                                             {confession.ip && (
                                                                 <Button
                                                                     variant="secondary"
                                                                     size="sm"
                                                                     onClick={() => handleAction('block_ip', { ip: confession.ip })}
-                                                                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                                                                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs sm:text-sm"
                                                                 >
-                                                                    <Ban className="h-4 w-4 mr-2" />
-                                                                    Block IP
+                                                                    <Ban className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                                                    <span className="hidden sm:inline">Block IP</span><span className="sm:hidden">🚫</span>
                                                                 </Button>
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <div className="bg-background/40 p-5 rounded-xl mb-4 border border-white/5">
-                                                        <p className="text-lg leading-relaxed whitespace-pre-wrap">{confession.content}</p>
+                                                    <div className="bg-background/40 p-3 sm:p-4 md:p-5 rounded-xl mb-4 border border-white/5">
+                                                        <p className="text-sm sm:text-base md:text-lg leading-relaxed whitespace-pre-wrap">{confession.content}</p>
                                                     </div>
 
                                                     {/* Reported Replies */}
@@ -429,7 +429,7 @@ export default function AdminPage() {
 
                     {/* All Posts Tab */}
                     <TabsContent value="all" className="space-y-6">
-                        <div className="flex flex-wrap gap-2 mb-6 p-4 bg-card/20 rounded-2xl border border-white/5">
+                        <div className="flex flex-wrap gap-2 mb-4 sm:mb-6 p-3 sm:p-4 bg-card/20 rounded-2xl border border-white/5 overflow-x-auto">
                             <div className="flex items-center gap-2 mr-2 text-muted-foreground">
                                 <Filter className="h-4 w-4" />
                                 <span className="text-sm font-medium">Filter:</span>
@@ -471,7 +471,7 @@ export default function AdminPage() {
                                             exit={{ opacity: 0, scale: 0.95 }}
                                         >
                                             <Card className="bg-card/30 backdrop-blur-sm border-white/5 hover:bg-card/40 transition-all hover:border-primary/20 group">
-                                                <CardContent className="p-5">
+                                                <CardContent className="p-3 sm:p-4 md:p-5">
                                                     <div className="flex justify-between items-start gap-4">
                                                         <div className="flex-1 space-y-2">
                                                             <p className="text-foreground/90 leading-relaxed">{confession.content}</p>
@@ -541,8 +541,8 @@ export default function AdminPage() {
                     </TabsContent>
 
                     {/* Security Tab */}
-                    <TabsContent value="security" className="space-y-6">
-                        <div className="grid md:grid-cols-2 gap-6">
+                    <TabsContent value="security" className="space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                             <Card className="bg-card/40 backdrop-blur-md border-white/10 h-fit">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -551,12 +551,12 @@ export default function AdminPage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                         <Input
-                                            placeholder="Enter IP address (e.g., 192.168.1.1)"
+                                            placeholder="IP address"
                                             value={ipToBlock}
                                             onChange={e => setIpToBlock(e.target.value)}
-                                            className="bg-background/50 border-white/10 focus:ring-red-500/20"
+                                            className="bg-background/50 border-white/10 focus:ring-red-500/20 text-sm"
                                         />
                                         <Button
                                             variant="destructive"
@@ -565,7 +565,7 @@ export default function AdminPage() {
                                                 setIpToBlock('');
                                             }}
                                             disabled={!ipToBlock}
-                                            className="shadow-lg shadow-red-500/20"
+                                            className="shadow-lg shadow-red-500/20 whitespace-nowrap"
                                         >
                                             Block
                                         </Button>
@@ -633,7 +633,7 @@ export default function AdminPage() {
                                                     initial={{ opacity: 0, x: -20 }}
                                                     animate={{ opacity: 1, x: 0 }}
                                                     exit={{ opacity: 0, x: 20 }}
-                                                    className="flex items-center justify-between p-3 bg-card/30 rounded-xl border border-white/5 group hover:border-red-500/30 transition-colors"
+                                                    className="flex items-center justify-between p-3 bg-card/30 rounded-xl border border-white/5 group hover:border-red-500/30 transition-colors flex-wrap sm:flex-nowrap gap-2"
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <div className="p-2 bg-red-500/10 rounded-lg">

@@ -187,8 +187,14 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
     };
 
     const handleReportClick = (type: 'confession' | 'reply', id: string) => {
-        setReportTarget({ type, id });
-        setShowReportModal(true);
+        // Toggle report modal - if clicking the same target, close it
+        if (showReportModal && reportTarget?.type === type && reportTarget?.id === id) {
+            setShowReportModal(false);
+            setReportTarget(null);
+        } else {
+            setReportTarget({ type, id });
+            setShowReportModal(true);
+        }
     };
 
     const handleShare = (reply?: Reply) => {
@@ -226,9 +232,9 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
     return (
         <>
             <Card className="border border-border bg-card shadow-none hover:border-primary/50 transition-colors duration-200">
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                     {/* Header: Tags & Time */}
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
                         <div className="flex flex-wrap gap-2">
                             {confession.tags && confession.tags.map((tag, index) => (
                                 <span
@@ -245,7 +251,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                     </div>
 
                     {/* Main Content */}
-                    <div className="mb-6">
+                    <div className="mb-4 sm:mb-6">
                         <p className="text-sm sm:text-[16px] leading-relaxed text-foreground font-normal whitespace-pre-wrap break-words">
                             {confession.content}
                         </p>
@@ -321,9 +327,20 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                         </div>
 
                         <div className="relative">
+                            {/* Clicking outside report modal closes it */}
                             {showReportModal && (
-                                <div className="absolute bottom-full right-0 mb-2 w-48 bg-background/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="p-2 space-y-1">
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => {
+                                        setShowReportModal(false);
+                                        setReportTarget(null);
+                                    }}
+                                />
+                            )}
+
+                            {showReportModal && (
+                                <div className="absolute bottom-full right-0 mb-2 w-40 sm:w-48 bg-background/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="p-1.5 sm:p-2 space-y-1">
                                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                             Report as...
                                         </div>
@@ -331,7 +348,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                             <button
                                                 key={reason}
                                                 onClick={() => handleReport(reason)}
-                                                className="w-full text-left px-2 py-1.5 text-sm rounded-lg hover:bg-white/10 hover:text-white transition-colors text-foreground/80"
+                                                className="w-full text-left px-2 py-1.5 text-xs sm:text-sm rounded-lg hover:bg-white/10 hover:text-white transition-colors text-foreground/80"
                                             >
                                                 {reason}
                                             </button>
@@ -347,7 +364,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                         initial={{ opacity: 0, y: 10, scale: 0.9 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: -10, scale: 0.9 }}
-                                        className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-xl shadow-2xl z-50 flex items-center gap-3"
+                                        className="absolute bottom-full right-0 mb-2 w-48 sm:w-64 p-2.5 sm:p-3 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-xl shadow-2xl z-50 flex items-center gap-2 sm:gap-3"
                                     >
                                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                                         <p className="text-xs font-medium text-green-400">
@@ -361,7 +378,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleReportClick('confession', confession.id)}
-                                className={`h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-300 ${showReportModal && reportTarget?.type === 'confession' ? 'text-white bg-destructive/20 backdrop-blur-xl shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}
+                                className={`h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 rounded-lg transition-all duration-300 ${showReportModal && reportTarget?.type === 'confession' ? 'text-white bg-destructive/20 backdrop-blur-xl shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]'}`}
                             >
                                 <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </Button>
@@ -370,20 +387,20 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
 
                     {/* Replies Section */}
                     {showReplies && (
-                        <div className="mt-6 pt-6 border-t border-border space-y-6">
+                        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border space-y-4 sm:space-y-6">
                             {/* Reply Input */}
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                 <Input
                                     value={replyContent}
                                     onChange={(e) => setReplyContent(e.target.value)}
                                     placeholder="Write a reply..."
-                                    className="flex-1 h-11 bg-secondary/30 border-border focus:border-primary rounded-lg"
+                                    className="flex-1 h-10 sm:h-11 text-sm bg-secondary/30 border-border focus:border-primary rounded-lg"
                                     onKeyPress={(e) => e.key === 'Enter' && handleReply()}
                                 />
                                 <Button
                                     onClick={handleReply}
                                     disabled={isSubmitting || !replyContent.trim()}
-                                    className="h-11 px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg"
+                                    className="h-10 sm:h-11 px-4 sm:px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg text-sm"
                                 >
                                     Reply
                                 </Button>
@@ -417,7 +434,7 @@ export default function ConfessionCard({ confession, onUpdate }: ConfessionCardP
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={() => handleReportClick('reply', reply.id)}
-                                                        className="h-6 w-6 text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_10px_rgba(239,68,68,0.2)] rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300"
+                                                        className="h-6 w-6 text-muted-foreground hover:text-white hover:bg-destructive/20 hover:backdrop-blur-xl hover:shadow-[0_0_10px_rgba(239,68,68,0.2)] rounded-md opacity-0 sm:group-hover:opacity-100 transition-all duration-300"
                                                         title="Report Reply"
                                                     >
                                                         <Flag className="h-3 w-3" />
